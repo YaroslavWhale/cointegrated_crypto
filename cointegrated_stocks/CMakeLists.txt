@@ -9,11 +9,11 @@ find_package(cpr REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 add_executable(cointegrated_stocks main.cpp
-    get_server.h
-    Ticker.h
-    TradingPair.h
-    Parser.h
-    get_signal.h
+    api_client.h
+
+    trading_pair.h
+
+    signal_generator.h
 )
 
 target_link_libraries(cointegrated_stocks

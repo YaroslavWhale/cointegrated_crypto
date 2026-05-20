@@ -160,9 +160,7 @@
 			[
 				1,
 				2,
-				3,
-				4,
-				5
+				3
 			]
 		}
 	],
@@ -176,27 +174,17 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "get_sever.h",
+			"path" : "api_client.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "Ticker.h",
+			"path" : "trading_pair.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "TradingPair.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "Parser.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "get_signal.h",
+			"path" : "signal_generator.h",
 			"sourceGroupIndex" : 1
 		}
 	],

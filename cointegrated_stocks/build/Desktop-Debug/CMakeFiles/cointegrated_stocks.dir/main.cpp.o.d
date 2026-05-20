@@ -134,14 +134,27 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/c++/15/bits/locale_facets.tcc \
  /usr/include/c++/15/bits/basic_ios.tcc \
  /usr/include/c++/15/bits/ostream.tcc /usr/include/c++/15/istream \
- /usr/include/c++/15/bits/istream.tcc /usr/include/c++/15/vector \
- /usr/include/c++/15/bits/stl_uninitialized.h \
+ /usr/include/c++/15/bits/istream.tcc /usr/include/c++/15/algorithm \
+ /usr/include/c++/15/bits/stl_algo.h \
+ /usr/include/c++/15/bits/algorithmfwd.h \
+ /usr/include/c++/15/bits/stl_heap.h \
+ /usr/include/c++/15/bits/uniform_int_dist.h \
+ /usr/include/c++/15/bits/stl_tempbuf.h \
+ /usr/include/c++/15/pstl/glue_algorithm_defs.h \
+ /usr/include/c++/15/pstl/execution_defs.h \
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/api_client.h \
+ /usr/include/c++/15/vector /usr/include/c++/15/bits/stl_uninitialized.h \
  /usr/include/c++/15/bits/stl_vector.h \
  /usr/include/c++/15/bits/stl_bvector.h \
- /usr/include/c++/15/bits/vector.tcc \
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/get_server.h \
- /usr/include/cpr/cpr.h /usr/include/cpr/api.h \
- /usr/include/c++/15/fstream /usr/include/c++/15/bits/codecvt.h \
+ /usr/include/c++/15/bits/vector.tcc /usr/include/c++/15/map \
+ /usr/include/c++/15/bits/stl_tree.h \
+ /usr/include/c++/15/ext/aligned_buffer.h \
+ /usr/include/c++/15/bits/node_handle.h \
+ /usr/include/c++/15/bits/stl_map.h \
+ /usr/include/c++/15/bits/stl_multimap.h \
+ /usr/include/c++/15/bits/erase_if.h /usr/include/cpr/cpr.h \
+ /usr/include/cpr/api.h /usr/include/c++/15/fstream \
+ /usr/include/c++/15/bits/codecvt.h \
  /usr/include/c++/15/x86_64-redhat-linux/bits/basic_file.h \
  /usr/include/c++/15/x86_64-redhat-linux/bits/c++io.h \
  /usr/include/c++/15/bits/fstream.tcc /usr/include/c++/15/functional \
@@ -150,13 +163,11 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/c++/15/bits/unordered_map.h \
  /usr/include/c++/15/bits/hashtable.h \
  /usr/include/c++/15/bits/hashtable_policy.h \
- /usr/include/c++/15/ext/aligned_buffer.h \
  /usr/include/c++/15/bits/enable_special_members.h \
- /usr/include/c++/15/bits/node_handle.h \
- /usr/include/c++/15/bits/erase_if.h /usr/include/c++/15/array \
- /usr/include/c++/15/compare /usr/include/c++/15/future \
- /usr/include/c++/15/mutex /usr/include/c++/15/bits/chrono.h \
- /usr/include/c++/15/ratio /usr/include/c++/15/cstdint \
+ /usr/include/c++/15/array /usr/include/c++/15/compare \
+ /usr/include/c++/15/future /usr/include/c++/15/mutex \
+ /usr/include/c++/15/bits/chrono.h /usr/include/c++/15/ratio \
+ /usr/include/c++/15/cstdint \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/stdint-uintn.h \
  /usr/include/bits/stdint-least.h /usr/include/c++/15/limits \
@@ -175,21 +186,18 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/c++/15/bits/std_thread.h /usr/include/c++/15/utility \
  /usr/include/c++/15/bits/stl_relops.h /usr/include/cpr/async.h \
  /usr/include/cpr/async_wrapper.h /usr/include/c++/15/memory \
- /usr/include/c++/15/bits/stl_tempbuf.h \
  /usr/include/c++/15/bits/stl_raw_storage_iter.h \
  /usr/include/c++/15/bits/align.h \
  /usr/include/c++/15/bits/shared_ptr_atomic.h \
  /usr/include/c++/15/backward/auto_ptr.h \
- /usr/include/c++/15/pstl/glue_memory_defs.h \
- /usr/include/c++/15/pstl/execution_defs.h /usr/include/cpr/singleton.h \
+ /usr/include/c++/15/pstl/glue_memory_defs.h /usr/include/cpr/singleton.h \
  /usr/include/c++/15/cassert /usr/include/assert.h \
  /usr/include/cpr/threadpool.h /usr/include/c++/15/chrono \
  /usr/include/c++/15/list /usr/include/c++/15/bits/stl_list.h \
  /usr/include/c++/15/bits/list.tcc /usr/include/c++/15/queue \
  /usr/include/c++/15/deque /usr/include/c++/15/bits/stl_deque.h \
- /usr/include/c++/15/bits/deque.tcc /usr/include/c++/15/bits/stl_heap.h \
- /usr/include/c++/15/bits/stl_queue.h /usr/include/c++/15/thread \
- /usr/include/c++/15/bits/this_thread_sleep.h \
+ /usr/include/c++/15/bits/deque.tcc /usr/include/c++/15/bits/stl_queue.h \
+ /usr/include/c++/15/thread /usr/include/c++/15/bits/this_thread_sleep.h \
  /usr/include/cpr/async_wrapper.h /usr/include/cpr/auth.h \
  /usr/include/cpr/util.h /usr/include/cpr/callback.h \
  /usr/include/cpr/cprtypes.h /usr/include/curl/curl.h \
@@ -210,9 +218,7 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/curl/curl.h /usr/include/curl/urlapi.h \
  /usr/include/curl/options.h /usr/include/curl/header.h \
  /usr/include/curl/websockets.h /usr/include/curl/mprintf.h \
- /usr/include/curl/system.h /usr/include/c++/15/map \
- /usr/include/c++/15/bits/stl_tree.h /usr/include/c++/15/bits/stl_map.h \
- /usr/include/c++/15/bits/stl_multimap.h /usr/include/c++/15/numeric \
+ /usr/include/curl/system.h /usr/include/c++/15/numeric \
  /usr/include/c++/15/bits/stl_numeric.h \
  /usr/include/c++/15/pstl/glue_numeric_defs.h \
  /usr/include/c++/15/optional /usr/include/cpr/cookies.h \
@@ -255,13 +261,8 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/cpr/user_agent.h /usr/include/cpr/verbose.h \
  /usr/include/cpr/cprver.h /usr/include/cpr/interceptor.h \
  /usr/include/cpr/ssl_ctx.h /usr/include/cpr/status_codes.h \
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/Parser.h \
- /usr/include/nlohmann/json.hpp /usr/include/c++/15/algorithm \
- /usr/include/c++/15/bits/stl_algo.h \
- /usr/include/c++/15/bits/algorithmfwd.h \
- /usr/include/c++/15/bits/uniform_int_dist.h \
- /usr/include/c++/15/pstl/glue_algorithm_defs.h \
- /usr/include/c++/15/iterator /usr/include/c++/15/bits/stream_iterator.h \
+ /usr/include/nlohmann/json.hpp /usr/include/c++/15/iterator \
+ /usr/include/c++/15/bits/stream_iterator.h \
  /usr/include/nlohmann/adl_serializer.hpp \
  /usr/include/nlohmann/detail/abi_macros.hpp \
  /usr/include/nlohmann/detail/conversions/from_json.hpp \
@@ -338,5 +339,5 @@ CMakeFiles/cointegrated_stocks.dir/main.cpp.o: \
  /usr/include/nlohmann/ordered_map.hpp /usr/include/c++/15/any \
  /usr/include/nlohmann/detail/macro_unscope.hpp \
  /usr/include/nlohmann/thirdparty/hedley/hedley_undef.hpp \
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/Ticker.h \
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/TradingPair.h
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/trading_pair.h \
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/signal_generator.h

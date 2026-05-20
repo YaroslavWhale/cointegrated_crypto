@@ -3,10 +3,9 @@
 
 CMakeFiles/cointegrated_stocks.dir/main.cpp.o
  /home/ahsoka/cointegrated_stocks/cointegrated_stocks/main.cpp
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/Parser.h
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/Ticker.h
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/TradingPair.h
- /home/ahsoka/cointegrated_stocks/cointegrated_stocks/get_server.h
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/api_client.h
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/signal_generator.h
+ /home/ahsoka/cointegrated_stocks/cointegrated_stocks/trading_pair.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
  /usr/include/asm-generic/errno-base.h
