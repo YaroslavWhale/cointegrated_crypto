@@ -162,41 +162,137 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named cointegrated_stocks
+# Target rules for targets named cointegrated_crypto
 
 # Build rule for target.
-cointegrated_stocks: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cointegrated_stocks
-.PHONY : cointegrated_stocks
+cointegrated_crypto: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cointegrated_crypto
+.PHONY : cointegrated_crypto
 
 # fast build rule for target.
-cointegrated_stocks/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_stocks.dir/build.make CMakeFiles/cointegrated_stocks.dir/build
-.PHONY : cointegrated_stocks/fast
+cointegrated_crypto/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/build
+.PHONY : cointegrated_crypto/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+src/app/trading_engine.o: src/app/trading_engine.cpp.o
+.PHONY : src/app/trading_engine.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_stocks.dir/build.make CMakeFiles/cointegrated_stocks.dir/main.cpp.o
-.PHONY : main.cpp.o
+src/app/trading_engine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/app/trading_engine.cpp.o
+.PHONY : src/app/trading_engine.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+src/app/trading_engine.i: src/app/trading_engine.cpp.i
+.PHONY : src/app/trading_engine.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_stocks.dir/build.make CMakeFiles/cointegrated_stocks.dir/main.cpp.i
-.PHONY : main.cpp.i
+src/app/trading_engine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/app/trading_engine.cpp.i
+.PHONY : src/app/trading_engine.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+src/app/trading_engine.s: src/app/trading_engine.cpp.s
+.PHONY : src/app/trading_engine.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_stocks.dir/build.make CMakeFiles/cointegrated_stocks.dir/main.cpp.s
-.PHONY : main.cpp.s
+src/app/trading_engine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/app/trading_engine.cpp.s
+.PHONY : src/app/trading_engine.cpp.s
+
+src/data/api_client.o: src/data/api_client.cpp.o
+.PHONY : src/data/api_client.o
+
+# target to build an object file
+src/data/api_client.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/data/api_client.cpp.o
+.PHONY : src/data/api_client.cpp.o
+
+src/data/api_client.i: src/data/api_client.cpp.i
+.PHONY : src/data/api_client.i
+
+# target to preprocess a source file
+src/data/api_client.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/data/api_client.cpp.i
+.PHONY : src/data/api_client.cpp.i
+
+src/data/api_client.s: src/data/api_client.cpp.s
+.PHONY : src/data/api_client.s
+
+# target to generate assembly for a file
+src/data/api_client.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/data/api_client.cpp.s
+.PHONY : src/data/api_client.cpp.s
+
+src/domain/kalman_filter.o: src/domain/kalman_filter.cpp.o
+.PHONY : src/domain/kalman_filter.o
+
+# target to build an object file
+src/domain/kalman_filter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/kalman_filter.cpp.o
+.PHONY : src/domain/kalman_filter.cpp.o
+
+src/domain/kalman_filter.i: src/domain/kalman_filter.cpp.i
+.PHONY : src/domain/kalman_filter.i
+
+# target to preprocess a source file
+src/domain/kalman_filter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/kalman_filter.cpp.i
+.PHONY : src/domain/kalman_filter.cpp.i
+
+src/domain/kalman_filter.s: src/domain/kalman_filter.cpp.s
+.PHONY : src/domain/kalman_filter.s
+
+# target to generate assembly for a file
+src/domain/kalman_filter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/kalman_filter.cpp.s
+.PHONY : src/domain/kalman_filter.cpp.s
+
+src/domain/spread_analyzer.o: src/domain/spread_analyzer.cpp.o
+.PHONY : src/domain/spread_analyzer.o
+
+# target to build an object file
+src/domain/spread_analyzer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/spread_analyzer.cpp.o
+.PHONY : src/domain/spread_analyzer.cpp.o
+
+src/domain/spread_analyzer.i: src/domain/spread_analyzer.cpp.i
+.PHONY : src/domain/spread_analyzer.i
+
+# target to preprocess a source file
+src/domain/spread_analyzer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/spread_analyzer.cpp.i
+.PHONY : src/domain/spread_analyzer.cpp.i
+
+src/domain/spread_analyzer.s: src/domain/spread_analyzer.cpp.s
+.PHONY : src/domain/spread_analyzer.s
+
+# target to generate assembly for a file
+src/domain/spread_analyzer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/domain/spread_analyzer.cpp.s
+.PHONY : src/domain/spread_analyzer.cpp.s
+
+src/main.o: src/main.cpp.o
+.PHONY : src/main.o
+
+# target to build an object file
+src/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/main.cpp.o
+.PHONY : src/main.cpp.o
+
+src/main.i: src/main.cpp.i
+.PHONY : src/main.i
+
+# target to preprocess a source file
+src/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/main.cpp.i
+.PHONY : src/main.cpp.i
+
+src/main.s: src/main.cpp.s
+.PHONY : src/main.s
+
+# target to generate assembly for a file
+src/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cointegrated_crypto.dir/build.make CMakeFiles/cointegrated_crypto.dir/src/main.cpp.s
+.PHONY : src/main.cpp.s
 
 # Help Target
 help:
@@ -210,10 +306,22 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... cointegrated_stocks"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... cointegrated_crypto"
+	@echo "... src/app/trading_engine.o"
+	@echo "... src/app/trading_engine.i"
+	@echo "... src/app/trading_engine.s"
+	@echo "... src/data/api_client.o"
+	@echo "... src/data/api_client.i"
+	@echo "... src/data/api_client.s"
+	@echo "... src/domain/kalman_filter.o"
+	@echo "... src/domain/kalman_filter.i"
+	@echo "... src/domain/kalman_filter.s"
+	@echo "... src/domain/spread_analyzer.o"
+	@echo "... src/domain/spread_analyzer.i"
+	@echo "... src/domain/spread_analyzer.s"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
 .PHONY : help
 
 

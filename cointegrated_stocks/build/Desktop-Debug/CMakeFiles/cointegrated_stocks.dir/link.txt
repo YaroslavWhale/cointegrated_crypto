@@ -1,1 +1,0 @@
-/usr/bin/g++ -DQT_QML_DEBUG -g -Wl,--dependency-file=CMakeFiles/cointegrated_stocks.dir/link.d CMakeFiles/cointegrated_stocks.dir/main.cpp.o -o cointegrated_stocks  /usr/lib64/libcpr.so.1.14.1 /usr/lib64/libcurl.so
