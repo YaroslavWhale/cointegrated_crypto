@@ -10,7 +10,6 @@ KalmanFilter::KalmanFilter(double R, double Q_alpha, double Q_beta,
     , last_innovation_(0.0) {}
 
 void KalmanFilter::update(double price1, double price2) {
-    // Прогноз
     std::array<double, 2> x_pred = x_;
     std::array<std::array<double, 2>, 2> P_pred;
     for (int i = 0; i < 2; ++i)

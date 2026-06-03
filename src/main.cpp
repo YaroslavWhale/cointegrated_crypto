@@ -19,6 +19,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    run_strategy(sym1, sym2, window);
+    run_live_strategy(sym1, sym2, window);
     return 0;
 }

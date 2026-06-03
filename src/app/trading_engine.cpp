@@ -1,52 +1,57 @@
 #include "app/trading_engine.h"
-#include "data/api_client.h"
 #include "domain/kalman_filter.h"
 #include "domain/spread_analyzer.h"
+#include "data/websocket_client.h"
 #include <iostream>
+#include <unordered_map>
 #include <algorithm>
+#include <cctype>
 
-void run_strategy(const std::string& sym1,
-                  const std::string& sym2,
-                  int spread_window,
-                  const std::string& interval,
-                  int limit) {
-    // 1. Загрузка данных
-    auto prices1 = fetch_historical_prices(sym1, interval, limit);
-    auto prices2 = fetch_historical_prices(sym2, interval, limit);
-    if (prices1.empty() || prices2.empty()) {
-        std::cerr << "Failed to load data. Exiting." << std::endl;
+void run_live_strategy(const std::string& sym1, const std::string& sym2, int spread_window) {
+    auto to_pair = [](const std::string& sym) -> std::string {
+        static const std::unordered_map<std::string, std::string> map = {
+            {"BTC", "BTCUSDT"}, {"ETH", "ETHUSDT"}, {"BNB", "BNBUSDT"},
+            {"SOL", "SOLUSDT"}, {"XRP", "XRPUSDT"}
+        };
+        auto it = map.find(sym);
+        return it != map.end() ? it->second : "";
+    };
+
+    std::string pair1 = to_pair(sym1);
+    std::string pair2 = to_pair(sym2);
+    if (pair1.empty() || pair2.empty()) {
+        std::cerr << "Unsupported symbols" << std::endl;
         return;
     }
 
-    size_t n = std::min(prices1.size(), prices2.size());
-    prices1.resize(n);
-    prices2.resize(n);
-    if (n < 30) {
-        std::cerr << "Not enough data points (" << n << "), need at least 30." << std::endl;
-        return;
-    }
-
-    // 2. Инициализация моделей
-    double R = 0.001;
-    double Q_alpha = 0.0001;
-    double Q_beta  = 0.0001;
-    KalmanFilter kf(R, Q_alpha, Q_beta);
+    KalmanFilter kf(0.001, 0.0001, 0.0001);
     SpreadAnalyzer analyzer(sym1, sym2, spread_window);
 
-    // 3. Цикл обработки
-    std::cout << "Step\tPrice1\tPrice2\tAlpha\tBeta\tSpread\tZ-score\tSignal\n";
-    for (size_t i = 0; i < n; ++i) {
-        double p1 = prices1[i];
-        double p2 = prices2[i];
+    std::unordered_map<std::string, double> latest_price;
 
-        kf.update(p1, p2);
-        double spread = kf.get_spread();
+    WebSocketPriceFeed::PriceCallback callback = [&](const std::string& symbol, double price) {
+        latest_price[symbol] = price;
+        if (latest_price.count(pair1) && latest_price.count(pair2)) {
+            double p1 = latest_price[pair1];
+            double p2 = latest_price[pair2];
+            kf.update(p1, p2);
+            double spread = kf.get_spread();
+            std::string signal = analyzer.add_spread(spread);
+            double z = analyzer.get_z_score();
 
-        std::string signal = analyzer.add_spread(spread);
-        double z = analyzer.get_z_score();
+            std::cout << "Price " << sym1 << "=" << p1
+                      << ", " << sym2 << "=" << p2
+                      << " | Spread=" << spread
+                      << " | Z=" << z
+                      << " | Signal: " << signal << std::endl;
+        }
+    };
 
-        std::cout << i << "\t" << p1 << "\t" << p2 << "\t"
-                  << kf.get_alpha() << "\t" << kf.get_beta() << "\t"
-                  << spread << "\t" << z << "\t" << signal << "\n";
-    }
+    WebSocketPriceFeed feed(callback);
+    feed.subscribe(pair1 + "@kline_1m");
+    feed.subscribe(pair2 + "@kline_1m");
+
+    std::cout << "Starting live strategy for " << sym1 << "/" << sym2
+              << " (window=" << spread_window << ")\n";
+    feed.run();
 }
