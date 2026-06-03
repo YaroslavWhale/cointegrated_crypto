@@ -6,8 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
-find_package(websocketpp REQUIRED)
 find_package(OpenSSL REQUIRED)
+
+find_path(WEBSOCKETPP_INCLUDE_DIR
+    NAMES websocketpp/config/asio_client.hpp
+    PATHS /usr/include /usr/local/include
+)
+if(NOT WEBSOCKETPP_INCLUDE_DIR)
+    message(FATAL_ERROR "websocketpp not found. Install it: sudo apt install libwebsocketpp-dev")
+endif()
 
 set(SOURCES
     src/main.cpp
@@ -22,18 +29,20 @@ set(HEADERS
     include/domain/kalman_filter.h
     include/domain/spread_analyzer.h
     include/data/websocket_client.h
-    include/websocketpp/config/asio_tls_client.hpp #локальный TLS-конфиг
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${WEBSOCKETPP_INCLUDE_DIR}
+)
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         nlohmann_json::nlohmann_json
         Boost::system
         Boost::thread
-        websocketpp::websocketpp
         OpenSSL::SSL
         OpenSSL::Crypto
 )
