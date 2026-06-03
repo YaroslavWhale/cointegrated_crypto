@@ -50,7 +50,7 @@ make
 ```
 cointegrated_crypto/
 ├── CMakeLists.txt
-├── include/ # Заголовочные файлы
+├── include/  //Заголовочные файлы
 │ ├── kalman_filter.h
 │ ├── spread_analyzer.h
 │ ├── websocket_client.h
@@ -58,11 +58,11 @@ cointegrated_crypto/
 ├── src/
 │ ├── main.cpp
 │ ├── domain/
-│ │ ├── kalman_filter.cpp # Фильтр Калмана (смещение + коэффициент)
-│ │ └── spread_analyzer.cpp # Буфер спреда, z-score, сигналы
+│ │ ├── kalman_filter.cpp  //Фильтр Калмана (смещение + коэффициент)
+│ │ └── spread_analyzer.cpp  //Буфер спреда, z-score, сигналы
 │ ├── app/
-│ │ └── trading_engine.cpp # Основная логика стратегии
+│ │ └── trading_engine.cpp  //Основная логика стратегии
 │ └── data/
-│ └── websocket_client.cpp # WebSocket клиент для Binance
+│ └── websocket_client.cpp //WebSocket клиент для Binance
 └── README.md
 ```
