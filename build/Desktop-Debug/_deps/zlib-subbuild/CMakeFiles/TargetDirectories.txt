@@ -1,3 +1,0 @@
-/home/ahsoka/cointegrated_stocks/cointegrated_stocks/build/Desktop-Debug/_deps/zlib-subbuild/CMakeFiles/zlib-populate.dir
-/home/ahsoka/cointegrated_stocks/cointegrated_stocks/build/Desktop-Debug/_deps/zlib-subbuild/CMakeFiles/edit_cache.dir
-/home/ahsoka/cointegrated_stocks/cointegrated_stocks/build/Desktop-Debug/_deps/zlib-subbuild/CMakeFiles/rebuild_cache.dir
