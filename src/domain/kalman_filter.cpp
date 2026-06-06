@@ -1,4 +1,5 @@
 #include "domain/kalman_filter.h"
+#include <algorithm>
 
 KalmanFilter::KalmanFilter(double R, double Q_alpha, double Q_beta,
                            double init_alpha, double init_beta,
@@ -40,6 +41,13 @@ void KalmanFilter::update(double price1, double price2) {
     P_[1][0] = P_pred[1][0] - KSK01;
     P_[1][1] = P_pred[1][1] - KSK1;
 
+    // Стабилизация: симметризация и предотвращение вырождения
+    double P01_avg = 0.5 * (P_[0][1] + P_[1][0]);
+    P_[0][1] = P_[1][0] = P01_avg;
+    // Нижний предел диагональных элементов
+    P_[0][0] = std::max(P_[0][0], 1e-10);
+    P_[1][1] = std::max(P_[1][1], 1e-10);
+
     last_innovation_ = y;
 }
 
@@ -51,6 +59,7 @@ double KalmanFilter::get_beta_uncertainty()  const { return P_[1][1]; }
 
 void KalmanFilter::reset(double alpha, double beta, double P_alpha, double P_beta) {
     x_[0] = alpha; x_[1] = beta;
-    P_[0][0] = P_alpha; P_[1][1] = P_beta;
+    P_[0][0] = std::max(P_alpha, 1e-10);
+    P_[1][1] = std::max(P_beta, 1e-10);
     P_[0][1] = P_[1][0] = 0.0;
 }

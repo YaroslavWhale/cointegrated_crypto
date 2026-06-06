@@ -11,7 +11,9 @@ using json = nlohmann::json;
 
 class WebSocketPriceFeed {
 public:
-    using PriceCallback = std::function<void(const std::string& symbol, double price)>;
+    // Теперь коллбек получает цену закрытия и временную метку закрытия свечи (мс)
+    using PriceCallback = std::function<void(const std::string& symbol,
+                                             double price, uint64_t close_time)>;
 
     WebSocketPriceFeed();
     explicit WebSocketPriceFeed(PriceCallback callback);

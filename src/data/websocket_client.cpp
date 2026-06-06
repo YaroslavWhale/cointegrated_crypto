@@ -13,7 +13,6 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
     client_.set_open_handler([this](auto hdl) {
         std::cout << "[WS] Connected!" << std::endl;
         hdl_ = hdl;
-        // Отправляем подписку на каждый поток
         for (const auto& stream : subscribed_streams_) {
             std::string sub_msg = R"({"method":"SUBSCRIBE","params":[")" + stream + R"("],"id":1})";
             client_.send(hdl, sub_msg, websocketpp::frame::opcode::text);
@@ -26,21 +25,20 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
             if (payload.empty() || payload[0] != '{') return;
             auto j = json::parse(payload);
 
-            // Подтверждение подписки
             if (j.contains("result") && j["result"].is_null()) {
                 std::cout << "[WS] Subscription confirmed" << std::endl;
                 return;
             }
 
-            // Данные свечи
             if (j.contains("e") && j["e"] == "kline") {
                 auto& k = j["k"];
                 bool is_closed = k["x"].get<bool>();
                 std::string symbol = k["s"];
                 double price = std::stod(k["c"].get<std::string>());
+                uint64_t close_time = k["T"].get<uint64_t>(); // время закрытия в мс
 
                 if (is_closed && callback_) {
-                    callback_(symbol, price);
+                    callback_(symbol, price, close_time);
                 }
             }
         } catch (const std::exception& e) {
@@ -102,7 +100,7 @@ void WebSocketPriceFeed::run() {
 
     client_.connect(con);
     running_ = true;
-    client_.run();  // блокирующий вызов
+    client_.run();
     std::cout << "[WS] Event loop ended" << std::endl;
 }
 
