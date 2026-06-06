@@ -69,28 +69,33 @@ make
 --coint_check	Периодичность перепроверки коинтеграции (в минутах. по умолчанию 60)
 ```
 
-**Структура проекта**
+**Архитектура**
 
 ```text
 cointegrated_crypto/
+│
 ├── CMakeLists.txt
+│
 ├── include/
-│   ├── kalman_filter.h
-│   ├── spread_analyzer.h
-│   ├── cointegration_test.h
-│   ├── rest_client.h
-│   ├── websocket_client.h
-│   └── trading_engine.h
-├── src/
-│   ├── main.cpp
+│   ├── app/
+│   │   └── trading_engine.h
 │   ├── domain/
-│   │   ├── kalman_filter.cpp
-│   │   ├── spread_analyzer.cpp
-│   │   └── cointegration_test.cpp
-│   ├── data/
-│   │   ├── rest_client.cpp
-│   │   └── websocket_client.cpp
-│   └── app/
-│       └── trading_engine.cpp
-└── README.md
+│   │   ├── kalman_filter.h
+│   │   ├── spread_analyzer.h
+│   │   └── cointegration_test.h
+│   └── data/
+│       ├── websocket_client.h
+│       └── rest_client.h
+│
+ ── src/
+    ├── main.cpp
+    ├── app/
+    │   └── trading_engine.cpp
+    ├── domain/
+    │   ├── kalman_filter.cpp
+    │   ├── spread_analyzer.cpp
+    │   └── cointegration_test.cpp
+    └── data/
+        ├── websocket_client.cpp
+        └── rest_client.cpp
 ```
