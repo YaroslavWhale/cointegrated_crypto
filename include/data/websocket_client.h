@@ -1,10 +1,11 @@
 #pragma once
-#include <websocketpp/config/asio_tls_client.hpp>   //локальный конфиг
+#include <websocketpp/config/asio_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #include <nlohmann/json.hpp>
 #include <functional>
 #include <vector>
 #include <string>
+#include <thread>
 
 using json = nlohmann::json;
 
@@ -12,9 +13,11 @@ class WebSocketPriceFeed {
 public:
     using PriceCallback = std::function<void(const std::string& symbol, double price)>;
 
+    WebSocketPriceFeed();
     explicit WebSocketPriceFeed(PriceCallback callback);
     ~WebSocketPriceFeed();
 
+    void set_callback(PriceCallback callback);
     void subscribe(const std::string& stream_name);
     void run();
     void stop();
