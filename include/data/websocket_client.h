@@ -1,20 +1,25 @@
 #pragma once
-#include <websocketpp/config/asio_tls_client.hpp>   //локальный конфиг
+#include <websocketpp/config/asio_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #include <nlohmann/json.hpp>
 #include <functional>
 #include <vector>
 #include <string>
+#include <thread>
 
 using json = nlohmann::json;
 
 class WebSocketPriceFeed {
 public:
-    using PriceCallback = std::function<void(const std::string& symbol, double price)>;
+    // Теперь коллбек получает цену закрытия и временную метку закрытия свечи (мс)
+    using PriceCallback = std::function<void(const std::string& symbol,
+                                             double price, uint64_t close_time)>;
 
+    WebSocketPriceFeed();
     explicit WebSocketPriceFeed(PriceCallback callback);
     ~WebSocketPriceFeed();
 
+    void set_callback(PriceCallback callback);
     void subscribe(const std::string& stream_name);
     void run();
     void stop();

@@ -8,12 +8,18 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(OpenSSL REQUIRED)
 
+# Для CPR (если не установлен, замените на find_package(CURL))
+find_package(cpr CONFIG)
+if(NOT cpr_FOUND)
+    message(FATAL_ERROR "cpr not found. Install CPR: https://github.com/libcpr/cpr")
+endif()
+
 find_path(WEBSOCKETPP_INCLUDE_DIR
     NAMES websocketpp/config/asio_client.hpp
     PATHS /usr/include /usr/local/include
 )
 if(NOT WEBSOCKETPP_INCLUDE_DIR)
-    message(FATAL_ERROR "websocketpp not found. Install it: sudo apt install libwebsocketpp-dev")
+    message(FATAL_ERROR "websocketpp not found. Install: sudo apt install libwebsocketpp-dev")
 endif()
 
 set(SOURCES
@@ -21,14 +27,18 @@ set(SOURCES
     src/app/trading_engine.cpp
     src/domain/kalman_filter.cpp
     src/domain/spread_analyzer.cpp
+    src/domain/cointegration_test.cpp
     src/data/websocket_client.cpp
+    src/data/rest_client.cpp
 )
 
 set(HEADERS
     include/app/trading_engine.h
     include/domain/kalman_filter.h
     include/domain/spread_analyzer.h
+    include/domain/cointegration_test.h
     include/data/websocket_client.h
+    include/data/rest_client.h
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
@@ -45,6 +55,7 @@ target_link_libraries(${PROJECT_NAME}
         Boost::thread
         OpenSSL::SSL
         OpenSSL::Crypto
+        cpr::cpr
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
