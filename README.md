@@ -22,8 +22,6 @@
 - websocketpp
 - cpr (HTTP-клиент на основе libcurl)
 
-### Зависимостей
-
 **Ubuntu / Debian**
 ```bash
 sudo apt install cmake g++ libboost-system-dev libboost-thread-dev libssl-dev nlohmann-json3-dev libwebsocketpp-dev libcurl4-openssl-dev
