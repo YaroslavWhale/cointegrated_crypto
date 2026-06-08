@@ -10,7 +10,6 @@ public:
     std::string add_spread(double spread);
 
     double get_z_score() const;
-
     void reset();
 
 private:
@@ -19,11 +18,9 @@ private:
     size_t window_size_;
     std::deque<double> spread_buffer_;
 
-    double last_z_score_ = 0.0;
-    int consecutive_signals_ = 0;
+    int consecutive_exceed_ = 0;
     static constexpr int REQUIRED_CONSECUTIVE = 3;
-    static constexpr double HYSTERESIS = 0.3;
 
-    double compute_z_score(double current_spread) const;
-    std::string signal_from_z_filtered(double z);
+    double compute_z_for_spread(double spread) const;
+    std::string signal_from_z(double z) const;
 };

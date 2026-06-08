@@ -30,44 +30,34 @@ std::pair<double, double> ols(const std::vector<double>& y,
     return {a, b};
 }
 
-// Расширенный ADF тест с выбором количества лагов по AIC (макс. 5 лагов)
-// Возвращает тестовую статистику (t-статистику для gamma)
 double adf_test(const std::vector<double>& y, int max_lags = 5) {
     size_t n = y.size();
     if (n < 10) return 0.0;
 
-    // Предварительно строим регрессию Δy_t = c + γ*y_{t-1} + Σ β_i Δy_{t-i}
-    // Будем перебирать количество лагов p от 0 до max_lags
     double best_aic = 1e30;
     double best_gamma_t = 0.0;
 
     for (int p = 0; p <= max_lags; ++p) {
-        size_t effective_n = n - p - 1; // используем наблюдения с индекса p+1
+        size_t effective_n = n - p - 1;
         if (effective_n < 10) continue;
 
-        // Формируем матрицу регрессоров: первая колонка = y_{t-1}, затем p колонок Δy_{t-j}
-        std::vector<std::vector<double>> X(effective_n, std::vector<double>(1 + p, 1.0)); // плюс константа? Нет, константу добавим отдельно
-        // У нас модель: Δy_t = const + γ * y_{t-1} + Σ β_j Δy_{t-j} + ε
-        // Положим const всегда включена. Удобнее вручную.
-        // Создадим вектор X размера effective_n x (2+p): [1, y_{t-1}, Δy_{t-1}, ..., Δy_{t-p}]
+        std::vector<std::vector<double>> X(effective_n, std::vector<double>(1 + p, 1.0));
+
         std::vector<std::vector<double>> Xmat(effective_n, std::vector<double>(2 + p, 0.0));
         std::vector<double> Y(effective_n);
 
         for (size_t i = 0; i < effective_n; ++i) {
-            size_t idx = p + i; // индекс в исходном ряду, откуда берём Δy_t
+            size_t idx = p + i;
             Y[i] = y[idx+1] - y[idx];
-            Xmat[i][0] = 1.0;                     // константа
-            Xmat[i][1] = y[idx];                  // y_{t-1}
+            Xmat[i][0] = 1.0;
+            Xmat[i][1] = y[idx];
             for (int j = 0; j < p; ++j) {
-                Xmat[i][2+j] = y[idx - j] - y[idx - j - 1]; // Δy_{t-1-j}
+                Xmat[i][2+j] = y[idx - j] - y[idx - j - 1];
             }
         }
 
-        // Регрессия: решаем (X'X)⁻¹ X'Y. Для простоты используем явное решение через OLS для каждого коэффициента? Лучше через QR или метод наименьших квадратов.
-        // Используем простую функцию решения нормальных уравнений.
         int nvars = 2 + p;
         std::vector<double> beta(nvars, 0.0);
-        // Собираем X'X и X'Y
         std::vector<std::vector<double>> XtX(nvars, std::vector<double>(nvars, 0.0));
         std::vector<double> XtY(nvars, 0.0);
         for (size_t i = 0; i < effective_n; ++i) {
@@ -79,16 +69,13 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
                 }
             }
         }
-        // Решаем систему XtX * beta = XtY методом Гаусса-Жордана
-        // Создадим расширенную матрицу
+
         std::vector<std::vector<double>> A(nvars, std::vector<double>(nvars+1, 0.0));
         for (int i = 0; i < nvars; ++i) {
             for (int j = 0; j < nvars; ++j) A[i][j] = XtX[i][j];
             A[i][nvars] = XtY[i];
         }
-        // Прямой ход
         for (int i = 0; i < nvars; ++i) {
-            // Частичный поворот
             int max_row = i;
             for (int r = i+1; r < nvars; ++r) if (fabs(A[r][i]) > fabs(A[max_row][i])) max_row = r;
             std::swap(A[i], A[max_row]);
@@ -101,12 +88,10 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
                 for (int j = i; j <= nvars; ++j) A[r][j] -= factor * A[i][j];
             }
         }
-        // Извлекаем beta
+
         for (int i = 0; i < nvars; ++i) beta[i] = A[i][nvars];
 
-        // gamma — это коэффициент при y_{t-1} (индекс 1)
         double gamma = beta[1];
-        // Оцениваем остатки и стандартную ошибку gamma
         double rss = 0.0;
         for (size_t i = 0; i < effective_n; ++i) {
             double pred = 0.0;
@@ -115,13 +100,8 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
             rss += e*e;
         }
         double sigma2 = rss / (effective_n - nvars);
-        double se_gamma = sqrt(sigma2 * A[1][1]); // диагональный элемент обратной матрицы, но мы уже привели к единичной, так что в A[1][1] будет значение обратной матрицы? Нужно правильно вычислить SE.
-        // После приведения к единичной диагонали, обратная матрица не хранится явно. Проще вычислить se через (X'X)^-1.
-        // Мы не вычислили (X'X)^-1 явно. Лучше используем аналитический метод: var-cov = sigma^2 * (X'X)^{-1}.
-        // Вычислим (X'X)^{-1} отдельно с помощью того же Гаусса-Жордана на единичную матрицу.
-        // Для простоты сделаем это.
+        double se_gamma = sqrt(sigma2 * A[1][1]);
 
-        // Создаём копию XtX и единичную матрицу
         std::vector<std::vector<double>> invXtX(nvars, std::vector<double>(nvars, 0.0));
         for (int i = 0; i < nvars; ++i) invXtX[i][i] = 1.0;
         std::vector<std::vector<double>> XtX_copy = XtX;
@@ -141,12 +121,11 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
                 }
             }
         }
-        if (invXtX.empty()) continue; // пропуск при вырожденной матрице
+        if (invXtX.empty()) continue;
 
         double se_gamma_correct = sqrt(sigma2 * invXtX[1][1]);
         double t_gamma = gamma / se_gamma_correct;
 
-        // AIC = n*log(RSS/n) + 2*k
         double aic = effective_n * log(rss/effective_n) + 2*nvars;
         if (aic < best_aic) {
             best_aic = aic;
@@ -156,14 +135,7 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
     return best_gamma_t;
 }
 
-// Преобразование t-статистики ADF в p-value (аппроксимация MacKinnon, 1996, модель с константой)
 double p_value_from_t(double t_stat, size_t n) {
-    // Критические значения для ADF с константой (без тренда) зависят от n.
-    // Используем формулу MacKinnon: C(p) = β0 + β1/T + β2/T^2, где T=n.
-    // Для уровня значимости 1%: β0=-3.4335, β1=-5.999, β2=-29.25
-    // 5%: -2.8621, -2.738, -8.36
-    // 10%: -2.5671, -1.438, -4.48
-    // Источник: MacKinnon (1996) "Numerical distribution functions..." Table 1 (constant, no trend).
     auto crit = [&](double b0, double b1, double b2) {
         return b0 + b1/n + b2/(n*n);
     };
@@ -180,7 +152,7 @@ double p_value_from_t(double t_stat, size_t n) {
     return std::min(p, 0.99);
 }
 
-} // анонимный namespace
+}
 
 bool CointegrationTest::test(const std::vector<double>& price1,
                              const std::vector<double>& price2,
