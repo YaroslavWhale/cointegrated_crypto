@@ -83,11 +83,15 @@ cointegrated_crypto/
 │   │   ├── kalman_filter.h
 │   │   ├── spread_analyzer.h
 │   │   └── cointegration_test.h
-│   └── data/
-│       ├── websocket_client.h
-│       └── rest_client.h
+│   │
+│   ├── data/
+│   │   ├── websocket_client.h
+│   │   └── rest_client.h
+│   │
+│   └── simulation/
+│       └── portfolio_simulator.h
 │
- ── src/
+└── src/
     ├── main.cpp
     ├── app/
     │   └── trading_engine.cpp
@@ -95,7 +99,12 @@ cointegrated_crypto/
     │   ├── kalman_filter.cpp
     │   ├── spread_analyzer.cpp
     │   └── cointegration_test.cpp
-    └── data/
-        ├── websocket_client.cpp
-        └── rest_client.cpp
+    │
+    ├── data/
+    │   ├── websocket_client.cpp
+    │   └── rest_client.cpp
+    │ 
+    └── simulation/
+        └── portfolio_simulator.cpp
+
 ```
