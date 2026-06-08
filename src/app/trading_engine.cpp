@@ -77,6 +77,27 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     SpreadAnalyzer analyzer(sym1, sym2, spread_window);
     PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
 
+    // === Прогрев фильтра Калмана и анализатора историческими минутными свечами ===
+    const int warmup_bars = std::max(spread_window, 100);  // достаточно для заполнения окна и калибровки
+    std::cout << "[3/4] Warming up Kalman filter with historical 1m candles ("
+              << warmup_bars << " bars)...\n";
+    auto warmup_closes1 = RestClient::fetch_klines(pair1, "1m", warmup_bars);
+    auto warmup_closes2 = RestClient::fetch_klines(pair2, "1m", warmup_bars);
+
+    if (warmup_closes1.size() >= 2 && warmup_closes2.size() >= 2) {
+        size_t n = std::min(warmup_closes1.size(), warmup_closes2.size());
+        for (size_t i = 0; i < n; ++i) {
+            double log_p1 = std::log(warmup_closes1[i]);
+            double log_p2 = std::log(warmup_closes2[i]);
+            kf.update(log_p1, log_p2);
+            analyzer.add_spread(kf.get_spread());
+        }
+        std::cout << "[3/4] Warm-up complete. Kalman filter and spread analyzer initialized with "
+                  << n << " historical 1m candles.\n";
+    } else {
+        std::cerr << "[3/4] Not enough historical 1m data for warm-up. Starting cold.\n";
+    }
+
     std::deque<double> hourly_log1, hourly_log2;
     double sum_log1 = 0.0, sum_log2 = 0.0;
     int minute_cnt = 0;

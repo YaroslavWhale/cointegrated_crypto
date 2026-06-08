@@ -78,11 +78,7 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
                                         }
                                     }
 
-                                    callback_(orig_other == symbol ? original_symbol : orig_other,
-                                              price,
-                                              orig_other == symbol ? orig_other : original_symbol,
-                                              price_other,
-                                              close_time);
+                                    callback_(original_symbol, price, orig_other, price_other, close_time);
                                     return;
                                 }
                             }
