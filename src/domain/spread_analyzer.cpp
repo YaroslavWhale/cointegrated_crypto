@@ -1,13 +1,14 @@
 #include "domain/spread_analyzer.h"
 #include <numeric>
 #include <cmath>
+#include <iostream>
 
 SpreadAnalyzer::SpreadAnalyzer(const std::string& sym1, const std::string& sym2,
                                size_t window_size)
     : sym1_(sym1), sym2_(sym2), window_size_(window_size) {}
 
 double SpreadAnalyzer::compute_z_for_spread(double spread) const {
-    if (spread_buffer_.size() < window_size_) return 0.0;
+    if (spread_buffer_.size() < 2) return 0.0;
     double sum = std::accumulate(spread_buffer_.begin(), spread_buffer_.end(), 0.0);
     double mean = sum / spread_buffer_.size();
     double sq_sum = 0.0;
@@ -16,16 +17,17 @@ double SpreadAnalyzer::compute_z_for_spread(double spread) const {
         sq_sum += d * d;
     }
     double stddev = std::sqrt(sq_sum / spread_buffer_.size());
-    if (stddev < 1e-12) return 0.0;
+    if (stddev < 1e-8) return 0.0;
     return (spread - mean) / stddev;
 }
 
 std::string SpreadAnalyzer::add_spread(double spread) {
-    double z = compute_z_for_spread(spread);
-
     spread_buffer_.push_back(spread);
     if (spread_buffer_.size() > window_size_)
         spread_buffer_.pop_front();
+
+    double z = compute_z_for_spread(spread);
+
     if (std::abs(z) > 2.0)
         ++consecutive_exceed_;
     else

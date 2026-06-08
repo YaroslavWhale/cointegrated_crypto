@@ -8,7 +8,7 @@
 
 namespace {
 
-// Обычная OLS: y = a + b*x
+// OLS: y = a + b*x
 std::pair<double, double> ols(const std::vector<double>& y,
                               const std::vector<double>& x) {
     size_t n = y.size();
@@ -30,6 +30,7 @@ std::pair<double, double> ols(const std::vector<double>& y,
     return {a, b};
 }
 
+// ADF test (упрощённый, только для остатков коинтеграции)
 double adf_test(const std::vector<double>& y, int max_lags = 5) {
     size_t n = y.size();
     if (n < 10) return 0.0;
@@ -40,8 +41,6 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
     for (int p = 0; p <= max_lags; ++p) {
         size_t effective_n = n - p - 1;
         if (effective_n < 10) continue;
-
-        std::vector<std::vector<double>> X(effective_n, std::vector<double>(1 + p, 1.0));
 
         std::vector<std::vector<double>> Xmat(effective_n, std::vector<double>(2 + p, 0.0));
         std::vector<double> Y(effective_n);
@@ -56,6 +55,7 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
             }
         }
 
+        // OLS для ADF регрессии
         int nvars = 2 + p;
         std::vector<double> beta(nvars, 0.0);
         std::vector<std::vector<double>> XtX(nvars, std::vector<double>(nvars, 0.0));
@@ -88,7 +88,6 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
                 for (int j = i; j <= nvars; ++j) A[r][j] -= factor * A[i][j];
             }
         }
-
         for (int i = 0; i < nvars; ++i) beta[i] = A[i][nvars];
 
         double gamma = beta[1];
@@ -100,8 +99,6 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
             rss += e*e;
         }
         double sigma2 = rss / (effective_n - nvars);
-        double se_gamma = sqrt(sigma2 * A[1][1]);
-
         std::vector<std::vector<double>> invXtX(nvars, std::vector<double>(nvars, 0.0));
         for (int i = 0; i < nvars; ++i) invXtX[i][i] = 1.0;
         std::vector<std::vector<double>> XtX_copy = XtX;
@@ -122,9 +119,8 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
             }
         }
         if (invXtX.empty()) continue;
-
-        double se_gamma_correct = sqrt(sigma2 * invXtX[1][1]);
-        double t_gamma = gamma / se_gamma_correct;
+        double se_gamma = sqrt(sigma2 * invXtX[1][1]);
+        double t_gamma = gamma / se_gamma;
 
         double aic = effective_n * log(rss/effective_n) + 2*nvars;
         if (aic < best_aic) {
@@ -135,19 +131,14 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
     return best_gamma_t;
 }
 
-double p_value_from_t(double t_stat, size_t n) {
-    auto crit = [&](double b0, double b1, double b2) {
-        return b0 + b1/n + b2/(n*n);
-    };
+double p_value_eg(double t_stat, size_t n) {
+    const double c01 = -3.90;
+    const double c05 = -3.34;
+    const double c10 = -3.04;
 
-    double c01 = crit(-3.4335, -5.999, -29.25);
-    double c05 = crit(-2.8621, -2.738, -8.36);
-    double c10 = crit(-2.5671, -1.438, -4.48);
-
-    if (t_stat < c01) return 0.01;
-    if (t_stat < c05) return 0.01 + 0.04 * (t_stat - c01) / (c05 - c01);
-    if (t_stat < c10) return 0.05 + 0.05 * (t_stat - c05) / (c10 - c05);
-    // p > 0.10
+    if (t_stat <= c01) return 0.01;
+    if (t_stat <= c05) return 0.01 + 0.04 * (t_stat - c01) / (c05 - c01);
+    if (t_stat <= c10) return 0.05 + 0.05 * (t_stat - c05) / (c10 - c05);
     double p = 0.10 + 0.90 * (1.0 - std::exp(-(t_stat - c10) / 0.5));
     return std::min(p, 0.99);
 }
@@ -182,7 +173,7 @@ bool CointegrationTest::test(const std::vector<double>& price1,
               << ", std(resid)=" << std::sqrt(var_res) << std::endl;
 
     double t_stat = adf_test(residuals);
-    p_value = p_value_from_t(t_stat, residuals.size());
+    p_value = p_value_eg(t_stat, residuals.size());
     std::cout << "[COINT] ADF t-stat = " << t_stat << ", p-value = " << p_value << std::endl;
 
     return p_value < 0.05;

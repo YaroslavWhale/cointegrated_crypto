@@ -4,8 +4,8 @@
 #include "domain/cointegration_test.h"
 #include "data/rest_client.h"
 #include "data/websocket_client.h"
+#include "simulation/portfolio_simulator.h"
 #include <iostream>
-#include <unordered_map>
 #include <deque>
 #include <atomic>
 #include <cmath>
@@ -75,6 +75,7 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     std::cout << "[3/4] Initializing Kalman filter and spread analyzer...\n";
     KalmanFilter kf(0.001, 0.0001, 0.0001, alpha_eg, beta_eg);
     SpreadAnalyzer analyzer(sym1, sym2, spread_window);
+    PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
 
     std::deque<double> hourly_log1, hourly_log2;
     double sum_log1 = 0.0, sum_log2 = 0.0;
@@ -82,78 +83,78 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     uint64_t current_hour_start = 0;
     uint64_t last_coint_check_ms = 0;
 
-    struct Kline { double log_price; uint64_t close_time; };
-    std::unordered_map<std::string, Kline> pending_klines;
-
     std::cout << "[4/4] Starting WebSocket (minute klines)...\n";
     WebSocketPriceFeed feed;
 
-    feed.set_callback([&](const std::string& symbol, double price, uint64_t close_time) {
+    feed.set_callback([&](const std::string& s1, double p1,
+                          const std::string& s2, double p2,
+                          uint64_t close_time) {
         if (!active) return;
+        double log_p1, log_p2;
+        if (s1 == pair1) {
+            log_p1 = std::log(p1);
+            log_p2 = std::log(p2);
+        } else {
+            log_p1 = std::log(p2);
+            log_p2 = std::log(p1);
+        }
 
-        pending_klines[symbol] = {std::log(price), close_time};
-
-        if (pending_klines.count(pair1) && pending_klines.count(pair2)) {
-            const auto& k1 = pending_klines[pair1];
-            const auto& k2 = pending_klines[pair2];
-            if (k1.close_time == k2.close_time) {
-                double log_p1 = k1.log_price, log_p2 = k2.log_price;
-                uint64_t ts = k1.close_time;
-
-                uint64_t hour_start = (ts / 3600000) * 3600000;
-                if (current_hour_start == 0) {
-                    current_hour_start = hour_start;
-                    sum_log1 = sum_log2 = 0.0;
-                    minute_cnt = 0;
+        uint64_t hour_start = (close_time / 3600000) * 3600000;
+        if (current_hour_start == 0) {
+            current_hour_start = hour_start;
+            sum_log1 = sum_log2 = 0.0;
+            minute_cnt = 0;
+        }
+        if (hour_start == current_hour_start) {
+            sum_log1 += log_p1; sum_log2 += log_p2;
+            ++minute_cnt;
+        } else {
+            if (minute_cnt > 0) {
+                hourly_log1.push_back(sum_log1 / minute_cnt);
+                hourly_log2.push_back(sum_log2 / minute_cnt);
+                if (hourly_log1.size() > 200) {
+                    hourly_log1.pop_front();
+                    hourly_log2.pop_front();
                 }
-                if (hour_start == current_hour_start) {
-                    sum_log1 += log_p1; sum_log2 += log_p2;
-                    ++minute_cnt;
-                } else {
-                    if (minute_cnt > 0) {
-                        hourly_log1.push_back(sum_log1 / minute_cnt);
-                        hourly_log2.push_back(sum_log2 / minute_cnt);
-                        if (hourly_log1.size() > 200) {
-                            hourly_log1.pop_front();
-                            hourly_log2.pop_front();
-                        }
-                    }
-                    current_hour_start = hour_start;
-                    sum_log1 = log_p1; sum_log2 = log_p2;
-                    minute_cnt = 1;
-                }
-
-                if (coint_check_minutes > 0 && hourly_log1.size() >= 100) {
-                    if (last_coint_check_ms == 0)
-                        last_coint_check_ms = ts;
-                    else if (ts - last_coint_check_ms >= static_cast<uint64_t>(coint_check_minutes) * 60000) {
-                        std::vector<double> h1(hourly_log1.begin(), hourly_log1.end());
-                        std::vector<double> h2(hourly_log2.begin(), hourly_log2.end());
-                        double a, b, p;
-                        if (CointegrationTest::test(h1, h2, a, b, p)) {
-                            std::cout << "[COINT] Cointegration restored (p=" << p << "), updating parameters.\n";
-                            kf.reset(a, b);
-                        } else {
-                            std::cout << "[COINT] Not cointegrated (p=" << p << ").\n";
-                        }
-                        last_coint_check_ms = ts;
-                    }
-                }
-
-                kf.update(log_p1, log_p2);
-                double spread = kf.get_spread();
-                std::string signal = analyzer.add_spread(spread);
-                double z = analyzer.get_z_score();
-
-                std::cout << sym1 << "=" << std::exp(log_p1) << "  "
-                          << sym2 << "=" << std::exp(log_p2)
-                          << "  | Log spread=" << spread
-                          << "  | Z=" << z
-                          << "  | " << signal << std::endl;
-
-                pending_klines.erase(pair1);
-                pending_klines.erase(pair2);
             }
+            current_hour_start = hour_start;
+            sum_log1 = log_p1; sum_log2 = log_p2;
+            minute_cnt = 1;
+        }
+
+        if (coint_check_minutes > 0 && hourly_log1.size() >= 100) {
+            if (last_coint_check_ms == 0)
+                last_coint_check_ms = close_time;
+            else if (close_time - last_coint_check_ms >= static_cast<uint64_t>(coint_check_minutes) * 60000) {
+                std::vector<double> h1(hourly_log1.begin(), hourly_log1.end());
+                std::vector<double> h2(hourly_log2.begin(), hourly_log2.end());
+                double a, b, p;
+                if (CointegrationTest::test(h1, h2, a, b, p)) {
+                    std::cout << "[COINT] Cointegration restored (p=" << p << "), updating parameters.\n";
+                    kf.reset(a, b);
+                } else {
+                    std::cout << "[COINT] Not cointegrated (p=" << p << ").\n";
+                }
+                last_coint_check_ms = close_time;
+            }
+        }
+
+        kf.update(log_p1, log_p2);
+        double spread = kf.get_spread();
+        std::string signal = analyzer.add_spread(spread);
+        double z = analyzer.get_z_score();
+
+        double price1 = std::exp(log_p1);
+        double price2 = std::exp(log_p2);
+        std::cout << sym1 << "=" << price1 << "  "
+                  << sym2 << "=" << price2
+                  << "  | Log spread=" << spread
+                  << "  | Z=" << z
+                  << "  | " << signal << std::endl;
+
+        if (signal.find("SELL") != std::string::npos || signal.find("BUY") != std::string::npos) {
+            portfolio.process_signal(signal, price1, price2);
+            portfolio.print_status(price1, price2);
         }
     });
 

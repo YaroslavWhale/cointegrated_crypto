@@ -30,6 +30,7 @@ set(SOURCES
     src/domain/cointegration_test.cpp
     src/data/websocket_client.cpp
     src/data/rest_client.cpp
+    src/simulation/portfolio_simulator.cpp
 )
 
 set(HEADERS
@@ -39,6 +40,7 @@ set(HEADERS
     include/domain/cointegration_test.h
     include/data/websocket_client.h
     include/data/rest_client.h
+    include/simulation/portfolio_simulator.h
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

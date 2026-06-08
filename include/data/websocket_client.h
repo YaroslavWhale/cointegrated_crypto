@@ -6,19 +6,23 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <mutex>
+#include <map>
+#include <deque>
 
 using json = nlohmann::json;
 
 class WebSocketPriceFeed {
 public:
-    using PriceCallback = std::function<void(const std::string& symbol,
-                                             double price, uint64_t close_time)>;
+    using PairPriceCallback = std::function<void(const std::string& sym1, double price1,
+                                                 const std::string& sym2, double price2,
+                                                 uint64_t close_time)>;
 
     WebSocketPriceFeed();
-    explicit WebSocketPriceFeed(PriceCallback callback);
+    explicit WebSocketPriceFeed(PairPriceCallback callback);
     ~WebSocketPriceFeed();
 
-    void set_callback(PriceCallback callback);
+    void set_callback(PairPriceCallback callback);
     void subscribe(const std::string& stream_name);
     void run();
     void stop();
@@ -36,7 +40,11 @@ private:
 
     Client client_;
     ConnectionHdl hdl_;
-    PriceCallback callback_;
+    PairPriceCallback callback_;
     std::vector<std::string> subscribed_streams_;
     bool running_ = false;
+
+    std::mutex mutex_;
+    std::map<std::string, std::deque<std::pair<uint64_t, double>>> pending_klines_;
+    uint64_t last_processed_close_time_ = 0;
 };

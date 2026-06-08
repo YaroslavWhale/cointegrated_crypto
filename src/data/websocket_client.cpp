@@ -35,10 +35,44 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
                 bool is_closed = k["x"].get<bool>();
                 std::string symbol = k["s"];
                 double price = std::stod(k["c"].get<std::string>());
-                uint64_t close_time = k["T"].get<uint64_t>(); // время закрытия в мс
+                uint64_t close_time = k["T"].get<uint64_t>();
 
                 if (is_closed && callback_) {
-                    callback_(symbol, price, close_time);
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    pending_klines_[symbol].push_back({close_time, price});
+
+                    std::string other_symbol;
+                    for (auto& s : subscribed_streams_) {
+                        size_t pos = s.find('@');
+                        if (pos != std::string::npos) {
+                            std::string sym = s.substr(0, pos);
+                            if (sym != symbol) {
+                                other_symbol = sym;
+                                break;
+                            }
+                        }
+                    }
+                    if (!other_symbol.empty()) {
+                        auto it_other = pending_klines_.find(other_symbol);
+                        if (it_other != pending_klines_.end()) {
+                            auto& q = it_other->second;
+                            for (auto qi = q.begin(); qi != q.end(); ++qi) {
+                                if (qi->first == close_time) {
+                                    double price_other = qi->second;
+                                    q.erase(qi);
+                                    auto& this_q = pending_klines_[symbol];
+                                    for (auto ti = this_q.begin(); ti != this_q.end(); ++ti) {
+                                        if (ti->first == close_time) {
+                                            this_q.erase(ti);
+                                            break;
+                                        }
+                                    }
+                                    callback_(symbol, price, other_symbol, price_other, close_time);
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } catch (const std::exception& e) {
@@ -62,7 +96,7 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
     });
 }
 
-WebSocketPriceFeed::WebSocketPriceFeed(PriceCallback callback)
+WebSocketPriceFeed::WebSocketPriceFeed(PairPriceCallback callback)
     : WebSocketPriceFeed() {
     callback_ = std::move(callback);
 }
@@ -71,7 +105,7 @@ WebSocketPriceFeed::~WebSocketPriceFeed() {
     stop();
 }
 
-void WebSocketPriceFeed::set_callback(PriceCallback callback) {
+void WebSocketPriceFeed::set_callback(PairPriceCallback callback) {
     callback_ = std::move(callback);
 }
 

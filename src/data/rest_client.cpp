@@ -19,7 +19,7 @@ std::vector<double> RestClient::fetch_klines(const std::string& symbol,
             {"interval", interval},
             {"limit", std::to_string(limit)}
         },
-        cpr::Timeout{10000} // 10 секунд
+        cpr::Timeout{10000}
         );
 
     std::cout << "[REST] Status: " << r.status_code << std::endl;
