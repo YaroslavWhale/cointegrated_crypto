@@ -33,16 +33,22 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
             if (j.contains("e") && j["e"] == "kline") {
                 auto& k = j["k"];
                 bool is_closed = k["x"].get<bool>();
-                std::string symbol = k["s"];
+                std::string original_symbol = k["s"];
+                std::string symbol = original_symbol;
+                std::transform(symbol.begin(), symbol.end(), symbol.begin(),
+                               [](unsigned char c) { return std::tolower(c); });
                 double price = std::stod(k["c"].get<std::string>());
                 uint64_t close_time = k["T"].get<uint64_t>();
 
                 if (is_closed && callback_) {
                     std::lock_guard<std::mutex> lock(mutex_);
-                    pending_klines_[symbol].push_back({close_time, price});
+
+                    purge_old_entries(close_time);
+
+                    pending_klines_[symbol].push_back({close_time, price, original_symbol});
 
                     std::string other_symbol;
-                    for (auto& s : subscribed_streams_) {
+                    for (const auto& s : subscribed_streams_) {
                         size_t pos = s.find('@');
                         if (pos != std::string::npos) {
                             std::string sym = s.substr(0, pos);
@@ -52,22 +58,31 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
                             }
                         }
                     }
+
                     if (!other_symbol.empty()) {
                         auto it_other = pending_klines_.find(other_symbol);
                         if (it_other != pending_klines_.end()) {
-                            auto& q = it_other->second;
-                            for (auto qi = q.begin(); qi != q.end(); ++qi) {
-                                if (qi->first == close_time) {
-                                    double price_other = qi->second;
-                                    q.erase(qi);
-                                    auto& this_q = pending_klines_[symbol];
-                                    for (auto ti = this_q.begin(); ti != this_q.end(); ++ti) {
-                                        if (ti->first == close_time) {
-                                            this_q.erase(ti);
+                            auto& q_other = it_other->second;
+                            auto& q_this = pending_klines_[symbol];
+
+                            for (auto qi = q_other.begin(); qi != q_other.end(); ++qi) {
+                                if (qi->close_time == close_time) {
+                                    double price_other = qi->price;
+                                    std::string orig_other = qi->original_symbol;
+                                    q_other.erase(qi);
+
+                                    for (auto ti = q_this.begin(); ti != q_this.end(); ++ti) {
+                                        if (ti->close_time == close_time) {
+                                            q_this.erase(ti);
                                             break;
                                         }
                                     }
-                                    callback_(symbol, price, other_symbol, price_other, close_time);
+
+                                    callback_(orig_other == symbol ? original_symbol : orig_other,
+                                              price,
+                                              orig_other == symbol ? orig_other : original_symbol,
+                                              price_other,
+                                              close_time);
                                     return;
                                 }
                             }
@@ -143,5 +158,17 @@ void WebSocketPriceFeed::stop() {
         std::cout << "[WS] Stopping..." << std::endl;
         running_ = false;
         client_.stop();
+    }
+}
+
+void WebSocketPriceFeed::purge_old_entries(uint64_t latest_close_time) {
+    if (latest_close_time < MAX_PENDING_AGE_MS)
+        return;
+    uint64_t cutoff = latest_close_time - MAX_PENDING_AGE_MS;
+    for (auto& pair : pending_klines_) {
+        auto& q = pair.second;
+        while (!q.empty() && q.front().close_time < cutoff) {
+            q.pop_front();
+        }
     }
 }

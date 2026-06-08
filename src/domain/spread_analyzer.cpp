@@ -5,7 +5,8 @@
 
 SpreadAnalyzer::SpreadAnalyzer(const std::string& sym1, const std::string& sym2,
                                size_t window_size)
-    : sym1_(sym1), sym2_(sym2), window_size_(window_size) {}
+    : sym1_(sym1), sym2_(sym2), window_size_(window_size),
+    consecutive_exceed_(0), prev_z_sign_(0) {}
 
 double SpreadAnalyzer::compute_z_for_spread(double spread) const {
     if (spread_buffer_.size() < 2) return 0.0;
@@ -22,16 +23,33 @@ double SpreadAnalyzer::compute_z_for_spread(double spread) const {
 }
 
 std::string SpreadAnalyzer::add_spread(double spread) {
+    double z = 0.0;
+    if (spread_buffer_.size() >= 2) {
+        z = compute_z_for_spread(spread);
+    }
+
+    if (z > 2.0) {
+        if (prev_z_sign_ > 0) {
+            consecutive_exceed_++;
+        } else {
+            consecutive_exceed_ = 1;
+        }
+        prev_z_sign_ = 1;
+    } else if (z < -2.0) {
+        if (prev_z_sign_ < 0) {
+            consecutive_exceed_++;
+        } else {
+            consecutive_exceed_ = 1;
+        }
+        prev_z_sign_ = -1;
+    } else {
+        consecutive_exceed_ = 0;
+        prev_z_sign_ = 0;
+    }
+
     spread_buffer_.push_back(spread);
     if (spread_buffer_.size() > window_size_)
         spread_buffer_.pop_front();
-
-    double z = compute_z_for_spread(spread);
-
-    if (std::abs(z) > 2.0)
-        ++consecutive_exceed_;
-    else
-        consecutive_exceed_ = 0;
 
     return signal_from_z(z);
 }
@@ -60,4 +78,5 @@ std::string SpreadAnalyzer::signal_from_z(double z) const {
 void SpreadAnalyzer::reset() {
     spread_buffer_.clear();
     consecutive_exceed_ = 0;
+    prev_z_sign_ = 0;
 }

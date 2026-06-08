@@ -12,14 +12,6 @@ PortfolioSimulator::PortfolioSimulator(double initial_balance_usdt, double commi
     , commission_rate_(commission_rate), avg_entry_sym1_(0.0), avg_entry_sym2_(0.0)
     , leverage_(leverage), initial_margin_rate_(1.0 / leverage), min_balance_(min_balance) {}
 
-bool PortfolioSimulator::check_margin(double price_sym1, double price_sym2,
-                                      double delta_sym1, double delta_sym2) const {
-    double value_sym1 = std::abs(delta_sym1) * price_sym1;
-    double value_sym2 = std::abs(delta_sym2) * price_sym2;
-    double required_margin = (value_sym1 + value_sym2) * initial_margin_rate_;
-    return balance_usdt_ >= required_margin + min_balance_;
-}
-
 void PortfolioSimulator::process_signal(const std::string& signal, double price_sym1, double price_sym2) {
     if (signal.find("SELL") == std::string::npos || signal.find("BUY") == std::string::npos)
         return;
@@ -145,12 +137,4 @@ void PortfolioSimulator::execute_trade(const std::string& action,
     std::cout << "[TRADE] " << action << " | " << sym1_ << " " << size_sym1
               << " @ " << price_sym1 << " | " << sym2_ << " " << size_sym2
               << " @ " << price_sym2 << " | comm: " << t.commission << "\n";
-}
-
-void PortfolioSimulator::update_avg_prices(double price_sym1, double price_sym2,
-                                           double delta_sym1, double delta_sym2) {
-    if (std::abs(delta_sym1) > 1e-8)
-        avg_entry_sym1_ = (avg_entry_sym1_ * (position_sym1_ - delta_sym1) + delta_sym1 * price_sym1) / position_sym1_;
-    if (std::abs(delta_sym2) > 1e-8)
-        avg_entry_sym2_ = (avg_entry_sym2_ * (position_sym2_ - delta_sym2) + delta_sym2 * price_sym2) / position_sym2_;
 }

@@ -48,7 +48,4 @@ private:
     std::string current_timestamp() const;
     void execute_trade(const std::string& action, double price_sym1, double price_sym2,
                        double size_sym1, double size_sym2);
-    void update_avg_prices(double price_sym1, double price_sym2,
-                           double delta_sym1, double delta_sym2);
-    bool check_margin(double price_sym1, double price_sym2, double delta_sym1, double delta_sym2) const;
 };

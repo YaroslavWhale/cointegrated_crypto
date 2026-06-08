@@ -8,7 +8,6 @@ public:
                    size_t window_size = 50);
 
     std::string add_spread(double spread);
-
     double get_z_score() const;
     void reset();
 
@@ -19,6 +18,7 @@ private:
     std::deque<double> spread_buffer_;
 
     int consecutive_exceed_ = 0;
+    int prev_z_sign_ = 0;
     static constexpr int REQUIRED_CONSECUTIVE = 3;
 
     double compute_z_for_spread(double spread) const;
