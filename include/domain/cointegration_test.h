@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include <vector>
 
@@ -8,3 +9,4 @@ public:
                      double& alpha, double& beta, double& p_value);
 };
 ///логика в архитектуре !?!?!??
+*/

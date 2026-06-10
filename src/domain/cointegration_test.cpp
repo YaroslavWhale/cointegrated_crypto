@@ -1,3 +1,4 @@
+/*
 #include "domain/cointegration_test.h"
 #include <cmath>
 #include <numeric>
@@ -178,3 +179,4 @@ bool CointegrationTest::test(const std::vector<double>& price1,
 
     return p_value < 0.05;
 }
+*/

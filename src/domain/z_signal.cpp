@@ -1,4 +1,4 @@
-#include "domain/spread_analyzer.h"
+#include "domain/z_signal.h"
 #include <numeric>
 #include <cmath>
 #include <iostream>

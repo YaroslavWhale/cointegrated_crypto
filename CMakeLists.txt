@@ -26,7 +26,7 @@ set(SOURCES
     src/main.cpp
     src/app/trading_engine.cpp
     src/domain/kalman_filter.cpp
-    src/domain/spread_analyzer.cpp
+    src/domain/z_signal.cpp
     src/domain/cointegration_test.cpp
     src/data/websocket_client.cpp
     src/data/rest_client.cpp
@@ -36,7 +36,7 @@ set(SOURCES
 set(HEADERS
     include/app/trading_engine.h
     include/domain/kalman_filter.h
-    include/domain/spread_analyzer.h
+    include/domain/z_signal.h
     include/domain/cointegration_test.h
     include/data/websocket_client.h
     include/data/rest_client.h

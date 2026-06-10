@@ -1,7 +1,6 @@
 #include "app/trading_engine.h"
 #include "domain/kalman_filter.h"
-#include "domain/spread_analyzer.h"
-#include "domain/cointegration_test.h"
+#include "domain/z_signal.h"
 #include "data/rest_client.h"
 #include "data/websocket_client.h"
 #include "simulation/portfolio_simulator.h"
@@ -21,14 +20,13 @@ void signal_handler(int /*sig*/) {
 }
 
 void run_live_strategy(const std::string& sym1, const std::string& sym2,
-                       int spread_window, int coint_check_minutes) {
+                       int spread_window) {
     std::cout.setf(std::ios::unitbuf);
     std::signal(SIGINT, signal_handler);
 
     std::cout << "\n=== Starting Pair Trading Strategy ===\n";
     std::cout << "Pair: " << sym1 << "/" << sym2 << std::endl;
-    std::cout << "Spread window: " << spread_window << std::endl;
-    std::cout << "Coint check every: " << coint_check_minutes << " minutes\n\n";
+    std::cout << "Spread window: " << spread_window << std::endl << std::endl;
 
     auto to_pair = [](const std::string& sym) -> std::string {
         static const std::unordered_map<std::string, std::string> map = {
@@ -46,40 +44,18 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
         return;
     }
 
-    const int hist_limit = 200;
-    const std::string hist_interval = "1h";
-    std::cout << "[1/4] Loading " << hist_limit << " " << hist_interval << " candles...\n";
-    auto closes1_raw = RestClient::fetch_klines(pair1, hist_interval, hist_limit);
-    auto closes2_raw = RestClient::fetch_klines(pair2, hist_interval, hist_limit);
-    if (closes1_raw.size() < 100 || closes2_raw.size() < 100) {
-        std::cerr << "Not enough historical data.\n";
-        return;
-    }
+    // Фиксированные параметры для фильтра Калмана (beta=1, alpha=0)
+    const double alpha_fixed = 0.0;
+    const double beta_fixed = 1.0;
 
-    std::vector<double> log1, log2;
-    log1.reserve(closes1_raw.size());
-    log2.reserve(closes2_raw.size());
-    for (double v : closes1_raw) log1.push_back(std::log(v));
-    for (double v : closes2_raw) log2.push_back(std::log(v));
-
-    std::cout << "[2/4] Testing for cointegration on log prices...\n";
-    double alpha_eg, beta_eg, p_value;
-    bool cointegrated = CointegrationTest::test(log1, log2, alpha_eg, beta_eg, p_value);
-    if (!cointegrated) {
-        std::cout << "[2/4] WARNING: not cointegrated (p=" << p_value << "). Using alpha=0, beta=1.\n";
-        alpha_eg = 0.0; beta_eg = 1.0;
-    } else {
-        std::cout << "[2/4] Cointegrated (p=" << p_value << "), alpha=" << alpha_eg << ", beta=" << beta_eg << "\n";
-    }
-
-    std::cout << "[3/4] Initializing Kalman filter and spread analyzer...\n";
-    KalmanFilter kf(0.001, 0.0001, 0.0001, alpha_eg, beta_eg);
+    std::cout << "[1/3] Initializing Kalman filter and spread analyzer...\n";
+    KalmanFilter kf(0.001, 0.0001, 0.0001, alpha_fixed, beta_fixed);
     SpreadAnalyzer analyzer(sym1, sym2, spread_window);
     PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
 
-    // === Прогрев фильтра Калмана и анализатора историческими минутными свечами ===
-    const int warmup_bars = std::max(spread_window, 100);  // достаточно для заполнения окна и калибровки
-    std::cout << "[3/4] Warming up Kalman filter with historical 1m candles ("
+    // Прогрев фильтра Калмана и анализатора историческими минутными свечами
+    const int warmup_bars = std::max(spread_window, 100);
+    std::cout << "[2/3] Warming up Kalman filter with historical 1m candles ("
               << warmup_bars << " bars)...\n";
     auto warmup_closes1 = RestClient::fetch_klines(pair1, "1m", warmup_bars);
     auto warmup_closes2 = RestClient::fetch_klines(pair2, "1m", warmup_bars);
@@ -92,24 +68,18 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
             kf.update(log_p1, log_p2);
             analyzer.add_spread(kf.get_spread());
         }
-        std::cout << "[3/4] Warm-up complete. Kalman filter and spread analyzer initialized with "
+        std::cout << "[2/3] Warm-up complete. Kalman filter and spread analyzer initialized with "
                   << n << " historical 1m candles.\n";
     } else {
-        std::cerr << "[3/4] Not enough historical 1m data for warm-up. Starting cold.\n";
+        std::cerr << "[2/3] Not enough historical 1m data for warm-up. Starting cold.\n";
     }
 
-    std::deque<double> hourly_log1, hourly_log2;
-    double sum_log1 = 0.0, sum_log2 = 0.0;
-    int minute_cnt = 0;
-    uint64_t current_hour_start = 0;
-    uint64_t last_coint_check_ms = 0;
-
-    std::cout << "[4/4] Starting WebSocket (minute klines)...\n";
+    std::cout << "[3/3] Starting WebSocket (minute klines)...\n";
     WebSocketPriceFeed feed;
 
     feed.set_callback([&](const std::string& s1, double p1,
                           const std::string& s2, double p2,
-                          uint64_t close_time) {
+                          uint64_t /*close_time*/) {
         if (!active) return;
         double log_p1, log_p2;
         if (s1 == pair1) {
@@ -118,46 +88,6 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
         } else {
             log_p1 = std::log(p2);
             log_p2 = std::log(p1);
-        }
-
-        uint64_t hour_start = (close_time / 3600000) * 3600000;
-        if (current_hour_start == 0) {
-            current_hour_start = hour_start;
-            sum_log1 = sum_log2 = 0.0;
-            minute_cnt = 0;
-        }
-        if (hour_start == current_hour_start) {
-            sum_log1 += log_p1; sum_log2 += log_p2;
-            ++minute_cnt;
-        } else {
-            if (minute_cnt > 0) {
-                hourly_log1.push_back(sum_log1 / minute_cnt);
-                hourly_log2.push_back(sum_log2 / minute_cnt);
-                if (hourly_log1.size() > 200) {
-                    hourly_log1.pop_front();
-                    hourly_log2.pop_front();
-                }
-            }
-            current_hour_start = hour_start;
-            sum_log1 = log_p1; sum_log2 = log_p2;
-            minute_cnt = 1;
-        }
-
-        if (coint_check_minutes > 0 && hourly_log1.size() >= 100) {
-            if (last_coint_check_ms == 0)
-                last_coint_check_ms = close_time;
-            else if (close_time - last_coint_check_ms >= static_cast<uint64_t>(coint_check_minutes) * 60000) {
-                std::vector<double> h1(hourly_log1.begin(), hourly_log1.end());
-                std::vector<double> h2(hourly_log2.begin(), hourly_log2.end());
-                double a, b, p;
-                if (CointegrationTest::test(h1, h2, a, b, p)) {
-                    std::cout << "[COINT] Cointegration restored (p=" << p << "), updating parameters.\n";
-                    kf.reset(a, b);
-                } else {
-                    std::cout << "[COINT] Not cointegrated (p=" << p << ").\n";
-                }
-                last_coint_check_ms = close_time;
-            }
         }
 
         kf.update(log_p1, log_p2);
