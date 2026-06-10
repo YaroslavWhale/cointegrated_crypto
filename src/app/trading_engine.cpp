@@ -4,6 +4,8 @@
 #include "data/rest_client.h"
 #include "data/websocket_client.h"
 #include "simulation/portfolio_simulator.h"
+#include "utils/statistical_utils.h"
+
 #include <iostream>
 #include <deque>
 #include <atomic>
@@ -11,6 +13,8 @@
 #include <csignal>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
+#include <vector>
 
 static std::atomic<bool> active{true};
 
@@ -44,39 +48,44 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
         return;
     }
 
-    // Фиксированные параметры для фильтра Калмана (beta=1, alpha=0)
-    const double alpha_fixed = 0.0;
-    const double beta_fixed = 1.0;
-
-    std::cout << "[1/3] Initializing Kalman filter and spread analyzer...\n";
-    KalmanFilter kf(0.001, 0.0001, 0.0001, alpha_fixed, beta_fixed);
-    SpreadAnalyzer analyzer(sym1, sym2, spread_window);
-    PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
-
-    // Прогрев фильтра Калмана и анализатора историческими минутными свечами
     const int warmup_bars = std::max(spread_window, 100);
-    std::cout << "[2/3] Warming up Kalman filter with historical 1m candles ("
-              << warmup_bars << " bars)...\n";
+    std::cout << "[1/4] Fetching historical 1m candles (" << warmup_bars << " bars)...\n";
     auto warmup_closes1 = RestClient::fetch_klines(pair1, "1m", warmup_bars);
     auto warmup_closes2 = RestClient::fetch_klines(pair2, "1m", warmup_bars);
 
-    if (warmup_closes1.size() >= 2 && warmup_closes2.size() >= 2) {
-        size_t n = std::min(warmup_closes1.size(), warmup_closes2.size());
-        for (size_t i = 0; i < n; ++i) {
-            double log_p1 = std::log(warmup_closes1[i]);
-            double log_p2 = std::log(warmup_closes2[i]);
-            kf.update(log_p1, log_p2);
-            analyzer.add_spread(kf.get_spread());
-        }
-        std::cout << "[2/3] Warm-up complete. Kalman filter and spread analyzer initialized with "
-                  << n << " historical 1m candles.\n";
-    } else {
-        std::cerr << "[2/3] Not enough historical 1m data for warm-up. Starting cold.\n";
+    if (warmup_closes1.size() < 2 || warmup_closes2.size() < 2) {
+        std::cerr << "[1/4] Not enough historical data. Exiting.\n";
+        return;
     }
 
-    std::cout << "[3/3] Starting WebSocket (minute klines)...\n";
-    WebSocketPriceFeed feed;
+    size_t n = std::min(warmup_closes1.size(), warmup_closes2.size());
+    std::vector<double> log_prices1(n), log_prices2(n);
+    for (size_t i = 0; i < n; ++i) {
+        log_prices1[i] = std::log(warmup_closes1[i]);
+        log_prices2[i] = std::log(warmup_closes2[i]);
+    }
 
+    OLSResult ols = compute_ols(log_prices2, log_prices1);
+    double alpha_init = ols.alpha;
+    double beta_init = ols.beta;
+    std::cout << "[2/4] Initial OLS: alpha=" << alpha_init << ", beta=" << beta_init << "\n";
+
+    std::cout << "[3/4] Optimizing Kalman parameters...\n";
+    KalmanParams params = optimize_kalman_parameters(log_prices1, log_prices2, alpha_init, beta_init);
+
+    KalmanFilter kf(params.R, params.Q_alpha, params.Q_beta, alpha_init, beta_init);
+    SpreadAnalyzer analyzer(sym1, sym2, spread_window);
+    PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2); // 10k USDT, 0.1% комиссия
+
+    std::cout << "[4/4] Warming up filter and spread analyzer (with adaptation)...\n";
+    for (size_t i = 0; i < n; ++i) {
+        kf.update(log_prices1[i], log_prices2[i]);
+        analyzer.add_spread(kf.get_spread());
+    }
+    analyzer.reset_signal_counters();
+    std::cout << "[4/4] Warm-up complete. Continuing with same filter state.\n";
+
+    WebSocketPriceFeed feed;
     feed.set_callback([&](const std::string& s1, double p1,
                           const std::string& s2, double p2,
                           uint64_t /*close_time*/) {
@@ -103,7 +112,8 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
                   << "  | Z=" << z
                   << "  | " << signal << std::endl;
 
-        if (signal.find("SELL") != std::string::npos || signal.find("BUY") != std::string::npos) {
+        if (signal.find("SELL") != std::string::npos ||
+            signal.find("BUY")  != std::string::npos) {
             portfolio.process_signal(signal, price1, price2);
             portfolio.print_status(price1, price2);
         }
@@ -113,7 +123,6 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     feed.subscribe(pair2 + "@kline_1m");
 
     std::cout << "\n=== STRATEGY IS LIVE ===\nPress Ctrl+C to stop\n\n";
-
     std::thread ws_thread([&feed]() { feed.run(); });
 
     while (active) {

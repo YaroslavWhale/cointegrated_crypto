@@ -10,6 +10,7 @@ public:
     std::string add_spread(double spread);
     double get_z_score() const;
     void reset();
+    void reset_signal_counters();
 
 private:
     std::string sym1_;

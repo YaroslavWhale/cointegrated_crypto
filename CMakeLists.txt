@@ -8,7 +8,6 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(OpenSSL REQUIRED)
 
-# Для CPR (если не установлен, замените на find_package(CURL))
 find_package(cpr CONFIG)
 if(NOT cpr_FOUND)
     message(FATAL_ERROR "cpr not found. Install CPR: https://github.com/libcpr/cpr")
@@ -31,6 +30,7 @@ set(SOURCES
     src/data/websocket_client.cpp
     src/data/rest_client.cpp
     src/simulation/portfolio_simulator.cpp
+    src/utils/statistical_utils.cpp
 )
 
 set(HEADERS
@@ -41,6 +41,7 @@ set(HEADERS
     include/data/websocket_client.h
     include/data/rest_client.h
     include/simulation/portfolio_simulator.h
+    include/utils/statistical_utils.h
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

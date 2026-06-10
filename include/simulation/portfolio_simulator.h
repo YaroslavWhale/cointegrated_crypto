@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <chrono>
 
 struct TradeRecord {
     std::string timestamp;
@@ -16,12 +15,13 @@ struct TradeRecord {
 
 class PortfolioSimulator {
 public:
-    PortfolioSimulator(double initial_balance_usdt, double commission_rate = 0.001,
-                       const std::string& sym1 = "BTC", const std::string& sym2 = "ETH",
-                       double leverage = 1.0, double min_balance = 10.0);
+    PortfolioSimulator(double initial_balance_usdt, double commission_rate,
+                       const std::string& sym1, const std::string& sym2);
 
     void process_signal(const std::string& signal, double price_sym1, double price_sym2);
+
     double get_equity(double price_sym1, double price_sym2) const;
+
     double get_balance() const { return balance_usdt_; }
     double get_unrealized_pnl(double price_sym1, double price_sym2) const;
     void print_status(double price_sym1, double price_sym2) const;
@@ -38,12 +38,7 @@ private:
     double avg_entry_sym1_;
     double avg_entry_sym2_;
     std::vector<TradeRecord> trades_;
-
-    double leverage_;
-    double initial_margin_rate_;
-    double min_balance_;
-
-    int current_direction_ = 0;
+    int current_direction_;
 
     std::string current_timestamp() const;
     void execute_trade(const std::string& action, double price_sym1, double price_sym2,

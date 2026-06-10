@@ -80,3 +80,8 @@ void SpreadAnalyzer::reset() {
     consecutive_exceed_ = 0;
     prev_z_sign_ = 0;
 }
+
+void SpreadAnalyzer::reset_signal_counters() {
+    consecutive_exceed_ = 0;
+    prev_z_sign_ = 0;
+}
