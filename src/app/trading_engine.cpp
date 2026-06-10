@@ -33,18 +33,15 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     std::cout << "Spread window: " << spread_window << std::endl << std::endl;
 
     auto to_pair = [](const std::string& sym) -> std::string {
-        static const std::unordered_map<std::string, std::string> map = {
-            {"BTC", "BTCUSDT"}, {"ETH", "ETHUSDT"}, {"BNB", "BNBUSDT"},
-            {"SOL", "SOLUSDT"}, {"XRP", "XRPUSDT"}
-        };
-        auto it = map.find(sym);
-        return it != map.end() ? it->second : "";
+        if (sym.size() >= 4 && sym.substr(sym.size() - 4) == "USDT")
+            return sym;
+        return sym + "USDT";
     };
 
     std::string pair1 = to_pair(sym1);
     std::string pair2 = to_pair(sym2);
-    if (pair1.empty() || pair2.empty()) {
-        std::cerr << "Unsupported symbols\n";
+    if (pair1.empty() || pair2.empty() || pair1 == pair2) {
+        std::cerr << "Invalid symbols or same pair. Exiting.\n";
         return;
     }
 
