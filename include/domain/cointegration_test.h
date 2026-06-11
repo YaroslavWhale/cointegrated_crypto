@@ -7,4 +7,3 @@ public:
                      const std::vector<double>& price2,
                      double& alpha, double& beta, double& p_value);
 };
-///логика в архитектуре !?!?!??
