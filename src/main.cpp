@@ -7,7 +7,7 @@
 int main(int argc, char* argv[]) {
     std::string sym1 = "BTC";
     std::string sym2 = "ETH";
-    int window = 50;
+    int window = 150;
     //int coint_check = 60;
 
     auto to_upper = [](std::string s) {

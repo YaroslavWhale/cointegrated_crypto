@@ -47,4 +47,5 @@ private:
     std::mutex mutex_;
     std::map<std::string, double> latest_price_;
     std::map<std::string, std::string> latest_original_symbol_;
+    std::map<std::string, uint64_t> latest_close_time_;
 };

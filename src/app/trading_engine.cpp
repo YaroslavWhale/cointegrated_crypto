@@ -1,3 +1,4 @@
+// app/trading_engine.cpp
 #include "app/trading_engine.h"
 #include "domain/kalman_filter.h"
 #include "domain/z_signal.h"
@@ -71,8 +72,8 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     KalmanParams params = optimize_kalman_parameters(log_prices1, log_prices2, alpha_init, beta_init);
 
     KalmanFilter kf(params.R, params.Q_alpha, params.Q_beta, alpha_init, beta_init);
-    SpreadAnalyzer analyzer(sym1, sym2, spread_window);
-    PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2); // 10k USDT, 0.1% комиссия
+    SpreadAnalyzer analyzer(sym1, sym2, spread_window, spread_window, 2.0, 0.5);
+    PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
 
     std::cout << "[4/4] Warming up filter and spread analyzer (with adaptation)...\n";
     for (size_t i = 0; i < n; ++i) {

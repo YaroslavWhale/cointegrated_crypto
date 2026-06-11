@@ -46,6 +46,7 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
 
                 latest_price_[symbol] = price;
                 latest_original_symbol_[symbol] = original_symbol;
+                latest_close_time_[symbol] = close_time;
 
                 std::string other_symbol;
                 for (const auto& s : subscribed_streams_) {
@@ -60,9 +61,20 @@ WebSocketPriceFeed::WebSocketPriceFeed() {
                 }
 
                 if (!other_symbol.empty() && latest_price_.count(other_symbol) && callback_) {
-                    double other_price = latest_price_[other_symbol];
-                    std::string other_orig = latest_original_symbol_[other_symbol];
-                    callback_(original_symbol, price, other_orig, other_price, close_time);
+                    uint64_t other_close_time = latest_close_time_[other_symbol];
+                    if (other_close_time == close_time) {
+                        double other_price = latest_price_[other_symbol];
+                        std::string other_orig = latest_original_symbol_[other_symbol];
+
+                        latest_price_.erase(symbol);
+                        latest_original_symbol_.erase(symbol);
+                        latest_close_time_.erase(symbol);
+                        latest_price_.erase(other_symbol);
+                        latest_original_symbol_.erase(other_symbol);
+                        latest_close_time_.erase(other_symbol);
+
+                        callback_(original_symbol, price, other_orig, other_price, close_time);
+                    }
                 }
             }
         } catch (const std::exception& e) {
