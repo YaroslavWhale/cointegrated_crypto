@@ -42,5 +42,5 @@ private:
 
     std::string current_timestamp() const;
     void execute_trade(const std::string& action, double price_sym1, double price_sym2,
-                       double size_sym1, double size_sym2);
+                       double size_sym1, double size_sym2, double pnl_realized = 0.0);
 };

@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <vector>
+#include <string>
 
 class RestClient {
 public:
@@ -8,3 +8,4 @@ public:
                                             const std::string& interval,
                                             int limit);
 };
+//int coint_check_minutes = 60);

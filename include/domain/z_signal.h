@@ -20,7 +20,7 @@ private:
 
     int consecutive_exceed_ = 0;
     int prev_z_sign_ = 0;
-    static constexpr int REQUIRED_CONSECUTIVE = 3;
+    static constexpr int REQUIRED_CONSECUTIVE = 1;
 
     double compute_z_for_spread(double spread) const;
     std::string signal_from_z(double z) const;

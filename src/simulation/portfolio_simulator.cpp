@@ -28,13 +28,14 @@ void PortfolioSimulator::process_signal(const std::string& signal, double price_
     if (current_direction_ != 0) {
         double close_s1 = -position_sym1_;
         double close_s2 = -position_sym2_;
-        double cost_s1 = close_s1 * price_sym1;
-        double cost_s2 = close_s2 * price_sym2;
-        double commission = (std::abs(cost_s1) + std::abs(cost_s2)) * commission_rate_;
-        double pnl = -(cost_s1 + cost_s2) - commission;
-        balance_usdt_ += pnl;
 
-        execute_trade("CLOSE", price_sym1, price_sym2, close_s1, close_s2);
+        double proceeds = close_s1 * price_sym1 + close_s2 * price_sym2;
+        double open_cost = position_sym1_ * avg_entry_sym1_ + position_sym2_ * avg_entry_sym2_;
+        double commission = (std::abs(close_s1 * price_sym1) + std::abs(close_s2 * price_sym2)) * commission_rate_;
+        double pnl_closed = proceeds - open_cost - commission;
+
+        balance_usdt_ += pnl_closed;
+        execute_trade("CLOSE", price_sym1, price_sym2, close_s1, close_s2, pnl_closed);
 
         position_sym1_ = 0.0;
         position_sym2_ = 0.0;
@@ -64,8 +65,9 @@ void PortfolioSimulator::process_signal(const std::string& signal, double price_
     avg_entry_sym1_ = price_sym1;
     avg_entry_sym2_ = price_sym2;
     current_direction_ = new_direction;
-    execute_trade((new_direction == -1) ? "SHORT " + sym1_ + "/LONG " + sym2_ : "LONG " + sym1_ + "/SHORT " + sym2_,
-                  price_sym1, price_sym2, position_sym1_, position_sym2_);
+    execute_trade((new_direction == -1) ? "SHORT " + sym1_ + "/LONG " + sym2_
+                                        : "LONG " + sym1_ + "/SHORT " + sym2_,
+                  price_sym1, price_sym2, position_sym1_, position_sym2_, 0.0);
 }
 
 double PortfolioSimulator::get_equity(double price_sym1, double price_sym2) const {
@@ -113,7 +115,8 @@ std::string PortfolioSimulator::current_timestamp() const {
 
 void PortfolioSimulator::execute_trade(const std::string& action,
                                        double price_sym1, double price_sym2,
-                                       double size_sym1, double size_sym2) {
+                                       double size_sym1, double size_sym2,
+                                       double pnl_realized) {
     TradeRecord t;
     t.timestamp = current_timestamp();
     t.action = action;
@@ -122,10 +125,11 @@ void PortfolioSimulator::execute_trade(const std::string& action,
     t.size_sym1 = size_sym1;
     t.size_sym2 = size_sym2;
     t.commission = (std::abs(size_sym1 * price_sym1) + std::abs(size_sym2 * price_sym2)) * commission_rate_;
-    t.pnl_realized = 0.0;
+    t.pnl_realized = pnl_realized;
     trades_.push_back(t);
 
     std::cout << "[TRADE] " << action << " | " << sym1_ << " " << size_sym1
               << " @ " << price_sym1 << " | " << sym2_ << " " << size_sym2
-              << " @ " << price_sym2 << " | comm: " << t.commission << "\n";
+              << " @ " << price_sym2 << " | comm: " << t.commission
+              << " | PnL: " << t.pnl_realized << "\n";
 }

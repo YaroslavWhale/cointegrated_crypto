@@ -8,7 +8,6 @@
 #include <thread>
 #include <mutex>
 #include <map>
-#include <deque>
 #include <cstdint>
 
 using json = nlohmann::json;
@@ -29,12 +28,6 @@ public:
     void stop();
 
 private:
-    struct KlineData {
-        uint64_t close_time;
-        double price;
-        std::string original_symbol;
-    };
-
     using Client = websocketpp::client<websocketpp::config::asio_tls_client>;
     using ConnectionHdl = websocketpp::connection_hdl;
 
@@ -45,8 +38,6 @@ private:
     websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context>
         on_tls_init(ConnectionHdl);
 
-    void purge_old_entries(uint64_t latest_close_time);
-
     Client client_;
     ConnectionHdl hdl_;
     PairPriceCallback callback_;
@@ -54,7 +45,6 @@ private:
     bool running_ = false;
 
     std::mutex mutex_;
-    std::map<std::string, std::deque<KlineData>> pending_klines_;
-    uint64_t last_processed_close_time_ = 0;
-    static constexpr int64_t MAX_PENDING_AGE_MS = 120000;
+    std::map<std::string, double> latest_price_;
+    std::map<std::string, std::string> latest_original_symbol_;
 };
