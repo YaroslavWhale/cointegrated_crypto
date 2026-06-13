@@ -5,20 +5,16 @@
 KalmanFilter::KalmanFilter(double R, double Q_alpha, double Q_beta,
                            double init_alpha, double init_beta,
                            double init_P_alpha, double init_P_beta)
-    : R_(R), R_adaptive_(R), R_base_(R)
-    , Q_{{ {Q_alpha, 0.0}, {0.0, Q_beta} }}
-    , Q_base_(Q_)
+    : R_(std::max(R_min_, std::min(R_max_, R)))
+    , Q_{{ {std::max(Q_min_, std::min(Q_max_, Q_alpha)), 0.0},
+          {0.0, std::max(Q_min_, std::min(Q_max_, Q_beta))} }}
     , x_{{init_alpha, init_beta}}
-    , P_{{ {init_P_alpha, 0.0}, {0.0, init_P_beta} }}
+    , P_{{ {std::max(init_P_alpha, 1e-10), 0.0},
+          {0.0, std::max(init_P_beta, 1e-10)} }}
     , last_innovation_(0.0), last_S_(0.0)
-{
-}
+{}
 
-void KalmanFilter::reset_adaptive() {
-    R_adaptive_ = R_base_;
-    R_ = R_base_;
-    Q_ = Q_base_;
-}
+void KalmanFilter::reset_adaptive() {}
 
 void KalmanFilter::update(double price1, double price2) {
     std::array<double, 2> x_pred = x_;
@@ -58,22 +54,6 @@ void KalmanFilter::update(double price1, double price2) {
 
     last_innovation_ = y;
     last_S_ = S;
-
-    //Адаптация
-    double innov_sq = y * y;
-    R_adaptive_ = lambda_R_ * R_adaptive_ + (1.0 - lambda_R_) * innov_sq;
-    R_ = std::max(R_min_, std::min(R_max_, R_adaptive_));
-
-    if (last_S_ > 1e-12) {
-        double norm_innov = innov_sq / last_S_;
-        if (norm_innov > threshold_innov_) {
-            Q_[0][0] = std::min(Q_max_, Q_[0][0] * Q_increase_factor_);
-            Q_[1][1] = std::min(Q_max_, Q_[1][1] * Q_increase_factor_);
-        } else {
-            Q_[0][0] = std::max(Q_base_[0][0], Q_[0][0] * Q_decrease_factor_);
-            Q_[1][1] = std::max(Q_base_[1][1], Q_[1][1] * Q_decrease_factor_);
-        }
-    }
 }
 
 double KalmanFilter::get_spread() const { return last_innovation_; }
@@ -87,9 +67,4 @@ void KalmanFilter::reset(double alpha, double beta, double P_alpha, double P_bet
     P_[0][0] = std::max(P_alpha, 1e-10);
     P_[1][1] = std::max(P_beta, 1e-10);
     P_[0][1] = P_[1][0] = 0.0;
-    // При сбросе сохраняем текущие адаптивные параметры как новые базовые
-    R_base_ = R_adaptive_;
-    Q_base_ = Q_;
-    R_ = R_base_;
-    R_adaptive_ = R_base_;
 }

@@ -28,6 +28,10 @@ public:
     const std::vector<TradeRecord>& get_trades() const { return trades_; }
     void reset();
 
+    // Новые методы
+    bool has_position() const;
+    void close_at_market(double price_sym1, double price_sym2);
+
 private:
     std::string sym1_, sym2_;
     double initial_balance_;

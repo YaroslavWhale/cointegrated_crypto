@@ -23,6 +23,25 @@ OLSResult compute_ols(const std::vector<double>& x, const std::vector<double>& y
     return {alpha, beta};
 }
 
+static std::vector<double> generate_range_limited(double base, double min_val, double max_val, int steps) {
+    std::vector<double> values;
+    if (base <= 0.0) base = 1e-10;
+    double log_base = std::log10(base);
+    double log_min = std::log10(min_val);
+    double log_max = std::log10(max_val);
+
+    if (log_base < log_min) log_min = log_base - 0.5;
+    if (log_base > log_max) log_max = log_base + 0.5;
+
+    double step = (log_max - log_min) / (steps - 1);
+    for (int i = 0; i < steps; ++i) {
+        double val = std::pow(10.0, log_min + i * step);
+        val = std::max(min_val, std::min(max_val, val));
+        values.push_back(val);
+    }
+    return values;
+}
+
 KalmanParams optimize_kalman_parameters(const std::vector<double>& log_prices1,
                                         const std::vector<double>& log_prices2,
                                         double alpha_init, double beta_init) {
@@ -84,47 +103,55 @@ KalmanParams optimize_kalman_parameters(const std::vector<double>& log_prices1,
     double Q_alpha_guess = std::max(var_alpha, 1e-12);
     double Q_beta_guess  = std::max(var_beta, 1e-12);
 
-    auto generate_range = [](double base, double min_factor, double max_factor, double step_log) {
-        std::vector<double> values;
-        if (base <= 0) base = 1e-10;
-        double log_base = std::log10(base);
-        double log_min = log_base + std::log10(min_factor);
-        double log_max = log_base + std::log10(max_factor);
-        for (double lv = log_min; lv <= log_max + 1e-12; lv += step_log) {
-            values.push_back(std::pow(10.0, lv));
+    // Границы, соответствующие KalmanFilter
+    constexpr double R_min_opt = 1e-4;
+    constexpr double R_max_opt = 1.0;
+    constexpr double Q_min_opt = 1e-12;
+    constexpr double Q_max_opt = 1e-10;
+
+    auto evaluate = [&](double R, double Qa, double Qb) {
+        KalmanFilter kf(R, Qa, Qb, alpha_init, beta_init);
+        double logL = 0.0;
+        for (size_t i = 0; i < n; ++i) {
+            kf.update(log_prices1[i], log_prices2[i]);
+            double innov = kf.get_innovation();
+            double S = kf.get_predicted_variance();
+            if (S <= 1e-12) S = 1e-12;
+            logL += -0.5 * (std::log(S) + (innov * innov) / S);
         }
-        return values;
+        return logL;
     };
 
-    std::vector<double> R_cand  = generate_range(R_guess, 0.01, 100.0, 0.5);
-    std::vector<double> Qa_cand = generate_range(Q_alpha_guess, 0.01, 100.0, 0.5);
-    std::vector<double> Qb_cand = generate_range(Q_beta_guess, 0.01, 100.0, 0.5);
-
-    if (R_cand.size() < 3)
-        R_cand = generate_range(R_guess, 0.0001, 10000.0, 1.0);
-    if (Qa_cand.size() < 3)
-        Qa_cand = generate_range(Q_alpha_guess, 0.0001, 10000.0, 1.0);
-    if (Qb_cand.size() < 3)
-        Qb_cand = generate_range(Q_beta_guess, 0.0001, 10000.0, 1.0);
+    auto R_range  = generate_range_limited(R_guess, R_min_opt, R_max_opt, 8);
+    auto Qa_range = generate_range_limited(Q_alpha_guess, Q_min_opt, Q_max_opt, 8);
+    auto Qb_range = generate_range_limited(Q_beta_guess, Q_min_opt, Q_max_opt, 8);
 
     double best_logL = -std::numeric_limits<double>::infinity();
     KalmanParams best_params = {R_guess, Q_alpha_guess, Q_beta_guess};
 
-    for (double R : R_cand) {
-        for (double Q_alpha : Qa_cand) {
-            for (double Q_beta : Qb_cand) {
-                KalmanFilter kf(R, Q_alpha, Q_beta, alpha_init, beta_init);
-                double logL = 0.0;
-                for (size_t i = 0; i < n; ++i) {
-                    kf.update(log_prices1[i], log_prices2[i]);
-                    double innov = kf.get_innovation();
-                    double S = kf.get_predicted_variance();
-                    if (S <= 1e-12) S = 1e-12;
-                    logL += -0.5 * (std::log(S) + (innov * innov) / S);
-                }
+    for (double R : R_range) {
+        for (double Qa : Qa_range) {
+            for (double Qb : Qb_range) {
+                double logL = evaluate(R, Qa, Qb);
                 if (logL > best_logL) {
                     best_logL = logL;
-                    best_params = {R, Q_alpha, Q_beta};
+                    best_params = {R, Qa, Qb};
+                }
+            }
+        }
+    }
+
+    auto fine_R  = generate_range_limited(best_params.R, R_min_opt, R_max_opt, 5);
+    auto fine_Qa = generate_range_limited(best_params.Q_alpha, Q_min_opt, Q_max_opt, 5);
+    auto fine_Qb = generate_range_limited(best_params.Q_beta, Q_min_opt, Q_max_opt, 5);
+
+    for (double R : fine_R) {
+        for (double Qa : fine_Qa) {
+            for (double Qb : fine_Qb) {
+                double logL = evaluate(R, Qa, Qb);
+                if (logL > best_logL) {
+                    best_logL = logL;
+                    best_params = {R, Qa, Qb};
                 }
             }
         }

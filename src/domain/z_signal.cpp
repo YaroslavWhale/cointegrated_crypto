@@ -69,7 +69,6 @@ std::string SpreadAnalyzer::add_spread(double spread) {
         prev_z_sign_ = 0;
     }
 
-    // Обновляем буфер спреда
     spread_buffer_.push_back(spread);
     if (spread_buffer_.size() > spread_window_size_)
         spread_buffer_.pop_front();

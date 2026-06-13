@@ -133,3 +133,28 @@ void PortfolioSimulator::execute_trade(const std::string& action,
               << " @ " << price_sym2 << " | comm: " << t.commission
               << " | PnL: " << t.pnl_realized << "\n";
 }
+
+// Новые методы
+bool PortfolioSimulator::has_position() const {
+    return position_sym1_ != 0.0 || position_sym2_ != 0.0;
+}
+
+void PortfolioSimulator::close_at_market(double price_sym1, double price_sym2) {
+    if (!has_position()) return;
+
+    double close_s1 = -position_sym1_;
+    double close_s2 = -position_sym2_;
+    double proceeds = close_s1 * price_sym1 + close_s2 * price_sym2;
+    double open_cost = position_sym1_ * avg_entry_sym1_ + position_sym2_ * avg_entry_sym2_;
+    double commission = (std::abs(close_s1 * price_sym1) + std::abs(close_s2 * price_sym2)) * commission_rate_;
+    double pnl_closed = proceeds - open_cost - commission;
+
+    balance_usdt_ += pnl_closed;
+    execute_trade("CLOSE (mean-revert)", price_sym1, price_sym2, close_s1, close_s2, pnl_closed);
+
+    position_sym1_ = 0.0;
+    position_sym2_ = 0.0;
+    avg_entry_sym1_ = 0.0;
+    avg_entry_sym2_ = 0.0;
+    current_direction_ = 0;
+}

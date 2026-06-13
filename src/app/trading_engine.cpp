@@ -46,7 +46,8 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
         return;
     }
 
-    const int warmup_bars = std::max(spread_window, 100);
+    // Увеличенный период разогрева: минимум 500 баров для сходимости фильтра
+    const int warmup_bars = std::max(spread_window, 500);
     std::cout << "[1/4] Fetching historical 1m candles (" << warmup_bars << " bars)...\n";
     auto warmup_closes1 = RestClient::fetch_klines(pair1, "1m", warmup_bars);
     auto warmup_closes2 = RestClient::fetch_klines(pair2, "1m", warmup_bars);
@@ -71,11 +72,12 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
     std::cout << "[3/4] Optimizing Kalman parameters...\n";
     KalmanParams params = optimize_kalman_parameters(log_prices1, log_prices2, alpha_init, beta_init);
 
+    // Используем параметры по умолчанию P_alpha = 1e-4, P_beta = 1e-6 (заданы в конструкторе)
     KalmanFilter kf(params.R, params.Q_alpha, params.Q_beta, alpha_init, beta_init);
     SpreadAnalyzer analyzer(sym1, sym2, spread_window, spread_window, 2.0, 0.5);
     PortfolioSimulator portfolio(10000.0, 0.001, sym1, sym2);
 
-    std::cout << "[4/4] Warming up filter and spread analyzer (with adaptation)...\n";
+    std::cout << "[4/4] Warming up filter and spread analyzer...\n";
     for (size_t i = 0; i < n; ++i) {
         kf.update(log_prices1[i], log_prices2[i]);
         analyzer.add_spread(kf.get_spread());
@@ -110,6 +112,15 @@ void run_live_strategy(const std::string& sym1, const std::string& sym2,
                   << "  | Z=" << z
                   << "  | " << signal << std::endl;
 
+        // --- Принудительное закрытие по возврату Z к нейтральному уровню ---
+        if (portfolio.has_position() && std::abs(z) < 0.5) {
+            std::cout << "[CLOSE] Z returned to neutral, closing position...\n";
+            portfolio.close_at_market(price1, price2);
+            portfolio.print_status(price1, price2);
+            return;
+        }
+
+        // --- Открытие / переворот по сигналу ---
         if (signal.find("SELL") != std::string::npos ||
             signal.find("BUY")  != std::string::npos) {
             portfolio.process_signal(signal, price1, price2);

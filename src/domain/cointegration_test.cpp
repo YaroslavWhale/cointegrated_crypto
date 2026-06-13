@@ -30,7 +30,6 @@ std::pair<double, double> ols(const std::vector<double>& y,
     return {a, b};
 }
 
-// ADF test (упрощённый, только для остатков коинтеграции)
 double adf_test(const std::vector<double>& y, int max_lags = 5) {
     size_t n = y.size();
     if (n < 10) return 0.0;
