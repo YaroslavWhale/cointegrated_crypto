@@ -54,7 +54,6 @@ double adf_test(const std::vector<double>& y, int max_lags = 5) {
             }
         }
 
-        // OLS для ADF регрессии
         int nvars = 2 + p;
         std::vector<double> beta(nvars, 0.0);
         std::vector<std::vector<double>> XtX(nvars, std::vector<double>(nvars, 0.0));

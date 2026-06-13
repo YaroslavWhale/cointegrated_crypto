@@ -103,7 +103,6 @@ KalmanParams optimize_kalman_parameters(const std::vector<double>& log_prices1,
     double Q_alpha_guess = std::max(var_alpha, 1e-12);
     double Q_beta_guess  = std::max(var_beta, 1e-12);
 
-    // Границы, соответствующие KalmanFilter
     constexpr double R_min_opt = 1e-4;
     constexpr double R_max_opt = 1.0;
     constexpr double Q_min_opt = 1e-12;

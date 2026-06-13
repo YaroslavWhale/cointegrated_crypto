@@ -134,7 +134,6 @@ void PortfolioSimulator::execute_trade(const std::string& action,
               << " | PnL: " << t.pnl_realized << "\n";
 }
 
-// Новые методы
 bool PortfolioSimulator::has_position() const {
     return position_sym1_ != 0.0 || position_sym2_ != 0.0;
 }

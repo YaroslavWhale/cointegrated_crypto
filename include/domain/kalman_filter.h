@@ -31,7 +31,7 @@ private:
     double last_S_;
 
     static constexpr double Q_min_ = 1e-12;
-    static constexpr double Q_max_ = 1e-10;   // очень медленный дрейф
-    static constexpr double R_min_ = 1e-4;    // высокий шум измерения
+    static constexpr double Q_max_ = 1e-10;
+    static constexpr double R_min_ = 1e-4;
     static constexpr double R_max_ = 1.0;
 };

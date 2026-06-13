@@ -34,5 +34,5 @@ private:
 
     double compute_z_for_spread(double spread) const;
     double compute_current_threshold() const;
-    std::string signal_from_z(double z) const;
+    std::string signal_from_z(double z, double threshold) const;
 };

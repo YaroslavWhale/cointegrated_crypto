@@ -50,11 +50,11 @@ std::string SpreadAnalyzer::add_spread(double spread) {
         z = compute_z_for_spread(spread);
     }
 
+    double threshold = compute_current_threshold();
+
     z_history_.push_back(z);
     if (z_history_.size() > z_window_size_)
         z_history_.pop_front();
-
-    double threshold = compute_current_threshold();
 
     if (z > threshold) {
         if (prev_z_sign_ > 0) consecutive_exceed_++;
@@ -73,7 +73,7 @@ std::string SpreadAnalyzer::add_spread(double spread) {
     if (spread_buffer_.size() > spread_window_size_)
         spread_buffer_.pop_front();
 
-    return signal_from_z(z);
+    return signal_from_z(z, threshold);
 }
 
 double SpreadAnalyzer::get_z_score() const {
@@ -85,11 +85,9 @@ double SpreadAnalyzer::get_current_threshold() const {
     return compute_current_threshold();
 }
 
-std::string SpreadAnalyzer::signal_from_z(double z) const {
+std::string SpreadAnalyzer::signal_from_z(double z, double threshold) const {
     if (spread_buffer_.size() < spread_window_size_)
         return "CALIBRATING (need " + std::to_string(spread_window_size_ - spread_buffer_.size()) + ")";
-
-    double threshold = compute_current_threshold();
 
     if (consecutive_exceed_ >= REQUIRED_CONSECUTIVE) {
         if (z > threshold)  return "SELL " + sym1_ + " / BUY " + sym2_;
