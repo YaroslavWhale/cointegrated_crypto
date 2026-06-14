@@ -1,35 +1,35 @@
-#include "app/trading_engine.h"
+#include "application/strategy_app.h"
 #include <iostream>
 #include <string>
-#include <algorithm>
 #include <cctype>
+#include <algorithm>
 
 int main(int argc, char* argv[]) {
-    std::string sym1 = "BTC";
-    std::string sym2 = "ETH";
-    int window = 150;
-    //int coint_check = 60;
+    AppConfig cfg;
+    cfg.symbol1 = "BTC";
+    cfg.symbol2 = "ETH";
+    cfg.quote = "USDT";
+    cfg.spread_window = 150;
+    cfg.pseudo_beta_R = 0.5;
 
     auto to_upper = [](std::string s) {
-        std::transform(s.begin(), s.end(), s.begin(),
-                       [](unsigned char c) { return std::toupper(c); });
+        std::transform(s.begin(), s.end(), s.begin(), ::toupper);
         return s;
     };
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--sym1" && i + 1 < argc) sym1 = to_upper(argv[++i]);
-        else if (arg == "--sym2" && i + 1 < argc) sym2 = to_upper(argv[++i]);
-        else if (arg == "--window" && i + 1 < argc) window = std::stoi(argv[++i]);
-        //else if (arg == "--coint_check" && i + 1 < argc) coint_check = std::stoi(argv[++i]);
+        if (arg == "--sym1" && i+1 < argc) cfg.symbol1 = to_upper(argv[++i]);
+        else if (arg == "--sym2" && i+1 < argc) cfg.symbol2 = to_upper(argv[++i]);
+        else if (arg == "--window" && i+1 < argc) cfg.spread_window = std::stoi(argv[++i]);
+        else if (arg == "--pseudo_beta_R" && i+1 < argc) cfg.pseudo_beta_R = std::stod(argv[++i]);
         else {
             std::cerr << "Usage: " << argv[0]
-                      << " [--sym1 BTC] [--sym2 ETH] [--window 50]\n";
+                      << " [--sym1 BTC] [--sym2 ETH] [--window 50] [--pseudo_beta_R 0.5]\n";
             return 1;
         }
     }
 
-    //run_live_strategy(sym1, sym2, window, coint_check);
-    run_live_strategy(sym1, sym2, window);
-    return 0;
+    StrategyApplication app(cfg);
+    return app.run();
 }

@@ -1,11 +1,9 @@
 #pragma once
-#include <vector>
-#include <string>
+#include "data/i_market_data_source.h"
 
-class RestClient {
+class BinanceRestClient : public IHistoricalDataSource {
 public:
-    static std::vector<double> fetch_klines(const std::string& symbol,
-                                            const std::string& interval,
-                                            int limit);
+    std::vector<double> fetch_klines(const std::string& symbol,
+                                     const std::string& interval,
+                                     int limit) override;
 };
-//int coint_check_minutes = 60);

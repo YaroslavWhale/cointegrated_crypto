@@ -4,6 +4,7 @@ project(cointegrated_crypto LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Зависимости
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(OpenSSL REQUIRED)
@@ -21,28 +22,43 @@ if(NOT WEBSOCKETPP_INCLUDE_DIR)
     message(FATAL_ERROR "websocketpp not found. Install: sudo apt install libwebsocketpp-dev")
 endif()
 
+# ====== Явный список ВСЕХ исходников ======
 set(SOURCES
     src/main.cpp
-    src/app/trading_engine.cpp
-    src/domain/kalman_filter.cpp
-    src/domain/z_signal.cpp
-    src/domain/cointegration_test.cpp
-    src/data/websocket_client.cpp
+    src/application/strategy_app.cpp
+    src/analysis/cointegration_test.cpp
+    src/analysis/spread_analyzer.cpp
     src/data/rest_client.cpp
-    src/simulation/portfolio_simulator.cpp
+    src/data/websocket_feed.cpp
+    src/filters/kalman_filter_2d.cpp
+    src/portfolio/simple_portfolio.cpp
+    src/strategy/pair_trading_strategy.cpp
     src/utils/statistical_utils.cpp
 )
 
+# ====== Явный список ВСЕХ заголовков (для отображения в Qt) ======
 set(HEADERS
-    include/app/trading_engine.h
-    include/domain/kalman_filter.h
-    include/domain/z_signal.h
-    include/domain/cointegration_test.h
-    include/data/websocket_client.h
+    include/core/instrument.h
+    include/core/types.h
+    include/data/i_market_data_source.h
+    include/data/i_live_data_feed.h
     include/data/rest_client.h
-    include/simulation/portfolio_simulator.h
+    include/data/websocket_feed.h
+    include/filters/i_state_estimator.h
+    include/filters/kalman_filter_2d.h
+    include/filters/kalman_filter_3d.h
+    include/analysis/spread_analyzer.h
+    include/analysis/cointegration_test.h
+    include/portfolio/i_portfolio.h
+    include/portfolio/simple_portfolio.h
+    include/strategy/pair_trading_strategy.h
+    include/application/strategy_app.h
     include/utils/statistical_utils.h
 )
+
+# Группировка в виртуальные папки для Qt Creator (как в старом проекте)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Sources" FILES ${SOURCES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Headers" FILES ${HEADERS})
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
