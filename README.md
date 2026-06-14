@@ -4,7 +4,7 @@
 
 ## Описание
 
-Стратегия реализует **парный трейдинг** с динамической оценкой спреда с помощью **адаптивного фильтра Калмана**. Фильтр Калмана позволяет коэффициентам hedge ratio (β) и α (сдвиг) эволюционировать во времени как случайное блуждание, что критически важно для нестационарных финансовых рядов.
+Стратегия реализует **парный трейдинг** с динамической оценкой спреда с помощью **адаптивного фильтра Калмана**. Фильтр Калмана позволяет коэффициентам hedge ratio (β) и α (сдвиг) эволюционировать во времени как случайное блуждание. Для повышения стабильности β используется **псевдоизмерение** (`apply_pseudo_beta`) — дополнительное наблюдение, подтягивающее оценку β к целевому значению (по умолчанию 1.0) с заданной дисперсией `R_beta`. Это помогает избежать дрейфа β при слабой коинтеграции.
 
 ### Как работает стратегия
 
@@ -58,7 +58,7 @@
 - websocketpp
 - cpr (HTTP-клиент)
 
-### **Установка**
+### **Установка зависимостей**
 
 #### Ubuntu / Debian
 ```bash
@@ -95,14 +95,15 @@ make
 Исполняемый файл cointegrated_crypto появится в /build.
 
 ```bash
-./cointegrated_crypto --sym1 BTC --sym2 ETH --window 50
+./cointegrated_crypto --sym1 BTC --sym2 ETH --window 150 --pseudo_beta_R 0.5
 ```
 Параметры:
-
 - --sym1	Тикер первого актива	(по умолчанию BTC)
 - --sym2	Тикер второго актива	(по умолчанию ETH)
 - --window	Размер окна для расчёта z-оценки (по умолчанию 150)
-
+- --pseudo_beta_R Дисперсия шума псевдоизмерения β (по умолчанию 0.5)
+- --quote Валюта котировки (USDT для крипты, USD для акций)
+- 
 # Архитектура проекта
 
 ```text
@@ -110,34 +111,54 @@ cointegrated_crypto/
 ├── CMakeLists.txt
 │
 ├── include/
-│   ├── app/
-│   │   └── trading_engine.h
-│   ├── domain/
-│   │   ├── kalman_filter.h
-│   │   ├─  z_signal.h
-│   │   └── cointegration_test.h //пока что не используется
-│   ├── data/
-│   │   ├── websocket_client.h
-│   │   └── rest_client.h
-│   ├── simulation/
-│   │   └── portfolio_simulator.h
-│   └── utils/
-│       └── statistical_utils.h //OLS, оптимизация параметров Калмана
+│   ├── core/                     # Базовые типы и структуры данных
+│   │   ├── instrument.h          #   Структура Instrument (symbol, base, quote)
+│   │   └── types.h               #   Callback-типы (PairPriceCallback)
+│   │
+│   ├── data/                     # Слой доступа к данным
+│   │   ├── i_market_data_source.h #   Интерфейс исторических данных
+│   │   ├── i_live_data_feed.h     #   Интерфейс live-потока (WebSocket)
+│   │   ├── rest_client.h          #   Binance REST API
+│   │   └── websocket_feed.h       #   Binance WebSocket
+│   │
+│   ├── filters/                  # Математические модели оценки состояния
+│   │   ├── i_state_estimator.h    #   Интерфейс фильтра (update, get_spread, ...)
+│   │   ├── kalman_filter_2d.h     #   Калман 2D (α, β) с псевдоизмерением β
+│   │   └── kalman_filter_3d.h     #   Заглушка для будущего фильтра 3D (α, β, γ)
+│   │
+│   ├── analysis/                 # Анализ спреда и генерация сигналов
+│   │   ├── spread_analyzer.h      #   Вычисление Z-score, адаптивный порог
+│   │   └── cointegration_test.h   #   Тест Энгла-Грейнджера (пока не активен)
+│   │
+│   ├── portfolio/                # Управление капиталом и позицией
+│   │   ├── i_portfolio.h          #   Интерфейс портфеля
+│   │   └── simple_portfolio.h     #   Симулятор портфеля с фиксированным плечом
+│   │
+│   ├── strategy/                 # Торговая логика
+│   │   └── pair_trading_strategy.h #  Основная стратегия (связывает фильтр, анализатор, портфель)
+│   │
+│   ├── application/              # Конфигурация и запуск приложения
+│   │   └── strategy_app.h         #  StrategyApplication + AppConfig
+│   │
+│   └── utils/                    # Вспомогательные функции
+│       └── statistical_utils.h    #  OLS, оптимизация параметров Калмана
 │
 └── src/
     ├── main.cpp
-    ├── app/
-    │   └── trading_engine.cpp
-    ├── domain/
-    │   ├── kalman_filter.cpp
-    │   ├── z_signal.cpp
-    │   └── cointegration_test.h //пока что не используется
-    │
+    ├── application/
+    │   └── strategy_app.cpp
+    ├── analysis/
+    │   ├── cointegration_test.cpp
+    │   └── spread_analyzer.cpp
     ├── data/
-    │   ├── websocket_client.cpp
-    │   └── rest_client.cpp
-    ├── simulation/
-    │   └── portfolio_simulator.cpp
+    │   ├── rest_client.cpp
+    │   └── websocket_feed.cpp
+    ├── filters/
+    │   └── kalman_filter_2d.cpp
+    ├── portfolio/
+    │   └── simple_portfolio.cpp
+    ├── strategy/
+    │   └── pair_trading_strategy.cpp
     └── utils/
         └── statistical_utils.cpp
 ```
