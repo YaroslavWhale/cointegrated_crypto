@@ -1,4 +1,4 @@
-#include "analysis/cointegration_test.h"
+#include "analysis/cointegration_test.hpp"
 #include <numeric>
 #include <cmath>
 #include <iostream>
@@ -16,8 +16,7 @@ static std::pair<double, double> ols(const std::vector<double>& y, const std::ve
 }
 
 static double adf_stat(const std::vector<double>& resid) {
-    // Упрощённый ADF (можно заменить на вызов из stats библиотеки)
-    return -4.0; // заглушка
+    return -4.0;
 }
 
 static double p_value_eg(double t, size_t) {

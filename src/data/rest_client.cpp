@@ -1,4 +1,4 @@
-#include "data/rest_client.h"
+#include "data/rest_client.hpp"
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <iostream>

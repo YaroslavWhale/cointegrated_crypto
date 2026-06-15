@@ -1,4 +1,4 @@
-#include "analysis/spread_analyzer.h"
+#include "analysis/spread_analyzer.hpp"
 #include <numeric>
 #include <cmath>
 

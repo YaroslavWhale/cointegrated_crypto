@@ -4,7 +4,6 @@ project(cointegrated_crypto LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Зависимости
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(OpenSSL REQUIRED)
@@ -22,7 +21,6 @@ if(NOT WEBSOCKETPP_INCLUDE_DIR)
     message(FATAL_ERROR "websocketpp not found. Install: sudo apt install libwebsocketpp-dev")
 endif()
 
-# ====== Явный список ВСЕХ исходников ======
 set(SOURCES
     src/main.cpp
     src/application/strategy_app.cpp
@@ -31,32 +29,33 @@ set(SOURCES
     src/data/rest_client.cpp
     src/data/websocket_feed.cpp
     src/filters/kalman_filter_2d.cpp
+    src/filters/kalman_filter_3d.cpp
     src/portfolio/simple_portfolio.cpp
     src/strategy/pair_trading_strategy.cpp
     src/utils/statistical_utils.cpp
 )
 
-# ====== Явный список ВСЕХ заголовков (для отображения в Qt) ======
 set(HEADERS
-    include/core/instrument.h
-    include/core/types.h
-    include/data/i_market_data_source.h
-    include/data/i_live_data_feed.h
-    include/data/rest_client.h
-    include/data/websocket_feed.h
-    include/filters/i_state_estimator.h
-    include/filters/kalman_filter_2d.h
-    include/filters/kalman_filter_3d.h
-    include/analysis/spread_analyzer.h
-    include/analysis/cointegration_test.h
-    include/portfolio/i_portfolio.h
-    include/portfolio/simple_portfolio.h
-    include/strategy/pair_trading_strategy.h
-    include/application/strategy_app.h
-    include/utils/statistical_utils.h
+    include/core/instrument.hpp
+    include/core/types.hpp
+    include/data/i_market_data_source.hpp
+    include/data/i_live_data_feed.hpp
+    include/data/rest_client.hpp
+    include/data/websocket_feed.hpp
+    include/math/matrix.hpp
+    include/filters/i_state_estimator.hpp
+    include/filters/kalman_filter_base.hpp
+    include/filters/kalman_filter_2d.hpp
+    include/filters/kalman_filter_3d.hpp
+    include/analysis/spread_analyzer.hpp
+    include/analysis/cointegration_test.hpp
+    include/portfolio/i_portfolio.hpp
+    include/portfolio/simple_portfolio.hpp
+    include/strategy/pair_trading_strategy.hpp
+    include/application/strategy_app.hpp
+    include/utils/statistical_utils.hpp
 )
 
-# Группировка в виртуальные папки для Qt Creator (как в старом проекте)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Sources" FILES ${SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Headers" FILES ${HEADERS})
 

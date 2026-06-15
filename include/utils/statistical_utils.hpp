@@ -1,6 +1,11 @@
 #pragma once
 #include <vector>
-#include "filters/kalman_filter_2d.h"
+
+struct KalmanParams {
+    double R;
+    double Q_alpha;
+    double Q_beta;
+};
 
 struct OLSResult {
     double alpha;

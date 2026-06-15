@@ -1,4 +1,4 @@
-#include "portfolio/simple_portfolio.h"
+#include "portfolio/simple_portfolio.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>

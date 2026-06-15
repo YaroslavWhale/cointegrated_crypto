@@ -1,4 +1,4 @@
-#include "strategy/pair_trading_strategy.h"
+#include "strategy/pair_trading_strategy.hpp"
 #include <iostream>
 #include <cmath>
 

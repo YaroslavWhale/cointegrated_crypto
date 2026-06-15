@@ -1,9 +1,9 @@
 #pragma once
 #include <memory>
-#include "filters/i_state_estimator.h"
-#include "analysis/spread_analyzer.h"
-#include "portfolio/i_portfolio.h"
-#include "data/i_live_data_feed.h"
+#include "filters/i_state_estimator.hpp"
+#include "analysis/spread_analyzer.hpp"
+#include "portfolio/i_portfolio.hpp"
+#include "data/i_live_data_feed.hpp"
 
 class PairTradingStrategy {
 public:

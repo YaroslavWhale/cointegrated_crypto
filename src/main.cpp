@@ -1,4 +1,4 @@
-#include "application/strategy_app.h"
+#include "application/strategy_app.hpp"
 #include <iostream>
 #include <string>
 #include <cctype>

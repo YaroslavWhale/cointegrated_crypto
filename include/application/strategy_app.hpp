@@ -1,9 +1,9 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "core/instrument.h"
-#include "data/i_live_data_feed.h"
-#include "strategy/pair_trading_strategy.h"
+#include "core/instrument.hpp"
+#include "data/i_live_data_feed.hpp"
+#include "strategy/pair_trading_strategy.hpp"
 
 struct AppConfig {
     std::string symbol1 = "BTC";

@@ -1,6 +1,6 @@
 #pragma once
-#include "portfolio/i_portfolio.h"
-#include "core/instrument.h"
+#include "portfolio/i_portfolio.hpp"
+#include "core/instrument.hpp"
 #include <vector>
 #include <string>
 
