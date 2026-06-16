@@ -44,6 +44,7 @@ set(HEADERS
     include/data/websocket_feed.hpp
     include/math/matrix.hpp
     include/filters/i_state_estimator.hpp
+    include/filters/i_pseudo_beta_estimator.hpp
     include/filters/kalman_filter_base.hpp
     include/filters/kalman_filter_2d.hpp
     include/filters/kalman_filter_3d.hpp

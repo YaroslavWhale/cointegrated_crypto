@@ -36,22 +36,18 @@ std::unique_ptr<IStateEstimator> StrategyApplication::create_kalman() {
         log2[i] = std::log(closes2[i]);
     }
 
-    std::cout << "[2/3] Optimizing Kalman parameters (2D beta only)...\n";
+    std::cout << "[2/3] Optimizing 3D Kalman parameters (with quadratic term)...\n";
     OLSResult ols = compute_ols(log2, log1);
     std::cout << "Initial OLS: alpha=" << ols.alpha << ", beta=" << ols.beta << "\n";
 
-    KalmanParams params = optimize_kalman_2d(log1, log2, ols.alpha, ols.beta);
-
     double init_gamma = 0.0;
-    double Q_gamma = 1e-12;
-    double init_P_gamma = 1e-8;
+    KalmanParams3D params = optimize_kalman_3d(log1, log2, ols.alpha, ols.beta, init_gamma);
 
     std::cout << "[3/3] Creating 3D Kalman filter and warming up...\n";
     auto est = std::make_unique<KalmanFilter3D>(params.R,
-                                                params.Q_alpha, params.Q_beta, Q_gamma,
+                                                params.Q_alpha, params.Q_beta, params.Q_gamma,
                                                 ols.alpha, ols.beta, init_gamma,
-                                                1e-4, 1e-6, init_P_gamma,
-                                                1.0);
+                                                1e-4, 1e-6, 1e-8);
 
     for (size_t i = 0; i < n; ++i)
         est->update(log1[i], log2[i]);

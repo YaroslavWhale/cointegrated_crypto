@@ -1,4 +1,5 @@
 #include "strategy/pair_trading_strategy.hpp"
+#include "filters/i_pseudo_beta_estimator.hpp"
 #include <iostream>
 #include <cmath>
 
@@ -15,7 +16,10 @@ void PairTradingStrategy::on_price_update(double price1, double price2, uint64_t
     estimator_->update(log1, log2);
 
     if (++tick_counter_ % 5 == 0) {
-        estimator_->apply_pseudo_beta(pseudo_beta_R_);
+        auto* beta_est = dynamic_cast<IPseudoBetaEstimator*>(estimator_.get());
+        if (beta_est) {
+            beta_est->apply_pseudo_beta(pseudo_beta_R_);
+        }
     }
 
     double spread = estimator_->get_spread();

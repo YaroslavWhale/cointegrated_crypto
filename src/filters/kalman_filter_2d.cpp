@@ -47,7 +47,10 @@ double KalmanFilter2D::get_spread() const {
 }
 
 void KalmanFilter2D::apply_pseudo_beta(double R_beta) {
-    kf_.pseudoUpdate(1, target_beta_, R_beta);
+    Vector<double, 2> H;
+    H.zero();
+    H.data[1][0] = 1.0;
+    kf_.apply_measurement(H, target_beta_, R_beta);
 }
 
 void KalmanFilter2D::reset() {
@@ -64,5 +67,3 @@ void KalmanFilter2D::reset() {
 double KalmanFilter2D::get_R() const { return R_; }
 double KalmanFilter2D::get_Q_alpha() const { return Q_.data[0][0]; }
 double KalmanFilter2D::get_Q_beta() const { return Q_.data[1][1]; }
-double KalmanFilter2D::innovation() const { return kf_.innovation(); }
-double KalmanFilter2D::innovation_variance() const { return kf_.innovationVariance(); }

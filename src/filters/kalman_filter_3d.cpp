@@ -31,11 +31,9 @@ static KalmanFilter<3>::CovMat make_P0(double init_P_alpha, double init_P_beta, 
 KalmanFilter3D::KalmanFilter3D(double R,
                                double Q_alpha, double Q_beta, double Q_gamma,
                                double init_alpha, double init_beta, double init_gamma,
-                               double init_P_alpha, double init_P_beta, double init_P_gamma,
-                               double target_beta)
+                               double init_P_alpha, double init_P_beta, double init_P_gamma)
     : R_(std::max(1e-4, std::min(R, 1.0)))
     , Q_(make_Q(Q_alpha, Q_beta, Q_gamma))
-    , target_beta_(target_beta)
     , kf_(Q_, R_, make_x0(init_alpha, init_beta, init_gamma),
           make_P0(init_P_alpha, init_P_beta, init_P_gamma))
 {}
@@ -50,10 +48,6 @@ void KalmanFilter3D::update(double price1_log, double price2_log) {
 
 double KalmanFilter3D::get_spread() const {
     return kf_.innovation();
-}
-
-void KalmanFilter3D::apply_pseudo_beta(double R_beta) {
-    kf_.pseudoUpdate(1, target_beta_, R_beta);
 }
 
 void KalmanFilter3D::reset() {

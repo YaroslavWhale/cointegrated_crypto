@@ -1,8 +1,8 @@
 #pragma once
-#include "filters/i_state_estimator.hpp"
+#include "filters/i_pseudo_beta_estimator.hpp"
 #include "filters/kalman_filter_base.hpp"
 
-class KalmanFilter2D : public IStateEstimator {
+class KalmanFilter2D : public IPseudoBetaEstimator {
 public:
     KalmanFilter2D(double R, double Q_alpha, double Q_beta,
                    double init_alpha = 0.0, double init_beta = 1.0,
@@ -16,8 +16,9 @@ public:
 
     double get_alpha() const { return kf_.state().data[0][0]; }
     double get_beta()  const { return kf_.state().data[1][0]; }
-    double innovation() const;
-    double innovation_variance() const;
+
+    double innovation() const override { return kf_.innovation(); }
+    double innovation_variance() const override { return kf_.innovationVariance(); }
 
     double get_R() const;
     double get_Q_alpha() const;

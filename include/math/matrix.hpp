@@ -62,7 +62,6 @@ public:
         return tr;
     }
 
-    // Скалярное умножение
     Matrix operator*(T scalar) const {
         Matrix res;
         for (size_t i = 0; i < Rows; ++i)

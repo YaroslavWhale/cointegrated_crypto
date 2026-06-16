@@ -5,7 +5,7 @@
 SpreadAnalyzer::SpreadAnalyzer(size_t spread_w, size_t z_w,
                                double mult, double min_thr)
     : spread_window_(spread_w), z_window_(z_w),
-      threshold_multiplier_(mult), min_threshold_(min_thr) {}
+    threshold_multiplier_(mult), min_threshold_(min_thr) {}
 
 double SpreadAnalyzer::compute_z(double spread) const {
     if (spread_buffer_.size() < 2) return 0.0;
@@ -29,8 +29,15 @@ double SpreadAnalyzer::compute_threshold() const {
 }
 
 std::string SpreadAnalyzer::add_spread(double spread) {
+    spread_buffer_.push_back(spread);
+    if (spread_buffer_.size() > spread_window_) spread_buffer_.pop_front();
+
     double z = 0.0;
-    if (spread_buffer_.size() >= 2) z = compute_z(spread);
+    if (spread_buffer_.size() >= 2) {
+        z = compute_z(spread_buffer_.back());
+    }
+    last_z_ = z;
+
     double threshold = compute_threshold();
 
     z_history_.push_back(z);
@@ -47,14 +54,11 @@ std::string SpreadAnalyzer::add_spread(double spread) {
         prev_sign_ = 0;
     }
 
-    spread_buffer_.push_back(spread);
-    if (spread_buffer_.size() > spread_window_) spread_buffer_.pop_front();
-
     return signal_from_z(z, threshold);
 }
 
 double SpreadAnalyzer::z_score() const {
-    return spread_buffer_.empty() ? 0.0 : compute_z(spread_buffer_.back());
+    return last_z_;
 }
 
 double SpreadAnalyzer::current_threshold() const {
@@ -76,6 +80,7 @@ void SpreadAnalyzer::reset() {
     z_history_.clear();
     consecutive_exceed_ = 0;
     prev_sign_ = 0;
+    last_z_ = 0.0;
 }
 
 void SpreadAnalyzer::reset_signal_counters() {
