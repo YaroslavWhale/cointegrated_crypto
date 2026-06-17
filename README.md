@@ -1,4 +1,4 @@
-# Трейд коинтегрированными активами (3D Калман)
+# Парный трейдинг (3D Калман)
 
 **Предупреждение:** ПРОЕКТ НАХОДИТСЯ В СТАДИИ РАЗРАБОТКИ И **НЕ ПРИГОДЕН ДЛЯ РЕАЛЬНОЙ ТОРГОВЛИ**. Используйте только для образовательных и исследовательских целей.
 
@@ -34,6 +34,7 @@
        `x_new = x_pred + K * y`,  
        `P_new = (I - K*H) * P_pred`.  
    - **Спред** – это инновация `y`.
+   котировку можно поменять в strategy_app.hpp (явно задаётся в коде по имолчанию USDT).
 
 3. **Генерация торговых сигналов**  
    - Текущий спред в z-оценку:  
@@ -100,8 +101,6 @@ make
 - --sym1	Тикер первого актива	(по умолчанию BTC)
 - --sym2	Тикер второго актива	(по умолчанию ETH)
 - --window	Размер окна для расчёта z-оценки (по умолчанию 150)
-- --pseudo_beta_R (не используется в 3D) Дисперсия шума псевдоизмерения (заглушка)
-- --quote Валюта котировки (USDT для крипты, USD для акций)
 
 # Архитектура проекта
 
@@ -110,42 +109,42 @@ cointegrated_crypto/
 ├── CMakeLists.txt
 │
 ├── include/
-│   ├── core/                     # Базовые типы и структуры данных
-│   │   ├── instrument.hpp        #   Структура Instrument (symbol, base, quote)
-│   │   └── types.hpp             #   Callback-типы (PairPriceCallback)
+│   ├── core/                     // Базовые типы и структуры данных
+│   │   ├── instrument.hpp        //   Структура Instrument (symbol, base, quote)
+│   │   └── types.hpp             //   Callback-типы (PairPriceCallback)
 │   │
-│   ├── data/                     # Слой доступа к данным
-│   │   ├── i_market_data_source.hpp #   Интерфейс исторических данных
-│   │   ├── i_live_data_feed.hpp    #   Интерфейс live-потока (WebSocket)
-│   │   ├── rest_client.hpp         #   Binance REST API
-│   │   └── websocket_feed.hpp      #   Binance WebSocket
+│   ├── data/                     // Слой доступа к данным
+│   │   ├── i_market_data_source.hpp //   Интерфейс исторических данных
+│   │   ├── i_live_data_feed.hpp    //   Интерфейс live-потока (WebSocket)
+│   │   ├── rest_client.hpp         //   Binance REST API
+│   │   └── websocket_feed.hpp      //   Binance WebSocket
 │   │
-│   ├── math/                    # Математические утилиты
-│   │   └── matrix.hpp            #   Шаблонная матрица и вектор (для Калмана)
+│   ├── math/                    // Математические утилиты
+│   │   └── matrix.hpp            //   Шаблонная матрица и вектор (для Калмана)
 │   │
-│   ├── filters/                  # Математические модели оценки состояния
-│   │   ├── i_state_estimator.hpp      #   Интерфейс фильтра (update, get_spread, ...)
-│   │   ├── i_pseudo_beta_estimator.hpp #   Интерфейс для псевдоизмерения β (для 2D)
-│   │   ├── kalman_filter_base.hpp     #   Базовый шаблонный фильтр Калмана
-│   │   ├── kalman_filter_2d.hpp       #   2D-фильтр (α, β) – устаревший, сохранён для совместимости
-│   │   └── kalman_filter_3d.hpp       #   3D-фильтр (α, β, γ) с квадратичным членом
+│   ├── filters/                  // Математические модели оценки состояния
+│   │   ├── i_state_estimator.hpp      //   Интерфейс фильтра (update, get_spread, ...)
+│   │   ├── i_pseudo_beta_estimator.hpp //  (не спользуется в стратегии просто есть :) )
+│   │   ├── kalman_filter_base.hpp     //   Базовый шаблонный фильтр Калмана
+│   │   ├── kalman_filter_2d.hpp       //   2D-фильтр (α, β) (не спользуется в стратегии просто есть :) )
+│   │   └── kalman_filter_3d.hpp       //   3D-фильтр (α, β, γ) с квадратичным членом
 │   │
-│   ├── analysis/                 # Анализ спреда и генерация сигналов
-│   │   ├── spread_analyzer.hpp    #   Вычисление Z-score, адаптивный порог, счётчик подтверждений
-│   │   └── cointegration_test.hpp #   Тест Энгла-Грейнджера (пока не активен)
+│   ├── analysis/                 // Анализ спреда и генерация сигналов
+│   │   ├── spread_analyzer.hpp    //   Вычисление Z-score, адаптивный порог, счётчик подтверждений
+│   │   └── cointegration_test.hpp //   Тест Энгла-Грейнджера (пока не активен)
 │   │
-│   ├── portfolio/                # Управление капиталом и позицией
-│   │   ├── i_portfolio.hpp        #   Интерфейс портфеля
-│   │   └── simple_portfolio.hpp   #   Симулятор портфеля с фиксированным плечом
+│   ├── portfolio/                // Управление капиталом и позицией
+│   │   ├── i_portfolio.hpp        //   Интерфейс портфеля
+│   │   └── simple_portfolio.hpp   //   Симулятор портфеля с фиксированным плечом
 │   │
-│   ├── strategy/                 # Торговая логика
-│   │   └── pair_trading_strategy.hpp #  Основная стратегия (связывает фильтр, анализатор, портфель)
+│   ├── strategy/                 // Торговая логика
+│   │   └── pair_trading_strategy.hpp //  Основная стратегия (связывает фильтр, анализатор, портфель)
 │   │
-│   ├── application/              # Конфигурация и запуск приложения
-│   │   └── strategy_app.hpp      #  StrategyApplication + AppConfig
+│   ├── application/              // Конфигурация и запуск приложения
+│   │   └── strategy_app.hpp      //  StrategyApplication + AppConfig
 │   │
-│   └── utils/                    # Вспомогательные функции
-│       └── statistical_utils.hpp #  OLS, оптимизация параметров Калмана (2D и 3D)
+│   └── utils/                    // Вспомогательные функции
+│       └── statistical_utils.hpp //  OLS, оптимизация параметров Калмана
 │
 └── src/
     ├── main.cpp
