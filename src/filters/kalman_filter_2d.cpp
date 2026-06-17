@@ -27,11 +27,9 @@ static KalmanFilter<2>::CovMat make_P0(double init_P_alpha, double init_P_beta) 
 
 KalmanFilter2D::KalmanFilter2D(double R, double Q_alpha, double Q_beta,
                                double init_alpha, double init_beta,
-                               double init_P_alpha, double init_P_beta,
-                               double target_beta)
+                               double init_P_alpha, double init_P_beta)
     : R_(std::max(1e-4, std::min(R, 1.0)))
     , Q_(make_Q(Q_alpha, Q_beta))
-    , target_beta_(target_beta)
     , kf_(Q_, R_, make_x0(init_alpha, init_beta), make_P0(init_P_alpha, init_P_beta))
 {}
 
@@ -44,13 +42,6 @@ void KalmanFilter2D::update(double price1_log, double price2_log) {
 
 double KalmanFilter2D::get_spread() const {
     return kf_.innovation();
-}
-
-void KalmanFilter2D::apply_pseudo_beta(double R_beta) {
-    Vector<double, 2> H;
-    H.zero();
-    H.data[1][0] = 1.0;
-    kf_.apply_measurement(H, target_beta_, R_beta);
 }
 
 void KalmanFilter2D::reset() {

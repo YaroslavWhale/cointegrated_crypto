@@ -15,7 +15,7 @@ struct AppConfig {
     double commission = 0.001;
     double threshold_mult = 2.0;
     double min_threshold = 0.5;
-    double pseudo_beta_R = 0.5;
+    // pseudo_beta_R удалён
 };
 
 class StrategyApplication {

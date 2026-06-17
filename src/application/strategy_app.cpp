@@ -92,8 +92,7 @@ int StrategyApplication::run() {
 
     PairTradingStrategy strategy(std::move(estimator),
                                  std::move(analyzer),
-                                 std::move(portfolio),
-                                 config_.pseudo_beta_R);
+                                 std::move(portfolio));
 
     auto feed = create_feed();
     feed->set_callback([&](double p1, double p2, uint64_t ts) {
