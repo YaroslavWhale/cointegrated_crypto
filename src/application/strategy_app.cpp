@@ -22,9 +22,10 @@ StrategyApplication::StrategyApplication(const AppConfig& cfg) : config_(cfg) {
 std::unique_ptr<IStateEstimator> StrategyApplication::create_kalman() {
     BinanceRestClient rest;
 
-    std::cout << "[1/3] Fetching historical data (" << config_.warmup_bars << " candles)...\n";
-    auto closes1 = rest.fetch_klines(instr1_.normalized(), "1m", config_.warmup_bars);
-    auto closes2 = rest.fetch_klines(instr2_.normalized(), "1m", config_.warmup_bars);
+    std::cout << "[1/3] Fetching historical data (" << config_.warmup_bars << " candles, "
+              << config_.interval << ")...\n";
+    auto closes1 = rest.fetch_klines(instr1_.normalized(), config_.interval, config_.warmup_bars);
+    auto closes2 = rest.fetch_klines(instr2_.normalized(), config_.interval, config_.warmup_bars);
 
     if (closes1.size() < 2 || closes2.size() < 2)
         throw std::runtime_error("Not enough historical data");
@@ -57,14 +58,15 @@ std::unique_ptr<IStateEstimator> StrategyApplication::create_kalman() {
 }
 
 std::unique_ptr<ILiveDataFeed> StrategyApplication::create_feed() {
-    return std::make_unique<BinanceWebSocketFeed>();
+    return std::make_unique<BinanceWebSocketFeed>(config_.interval);
 }
 
 int StrategyApplication::run() {
     std::cout.setf(std::ios::unitbuf);
     std::signal(SIGINT, signal_handler);
     std::cout << "\n=== Pair Trading: " << instr1_.symbol
-              << " / " << instr2_.symbol << " ===\n\n";
+              << " / " << instr2_.symbol << " ===\n";
+    std::cout << "Interval: " << config_.interval << "\n\n";
 
     auto estimator = create_kalman();
 
@@ -75,8 +77,8 @@ int StrategyApplication::run() {
                                                      config_.min_threshold);
     {
         BinanceRestClient rest;
-        auto c1 = rest.fetch_klines(instr1_.normalized(), "1m", config_.spread_window);
-        auto c2 = rest.fetch_klines(instr2_.normalized(), "1m", config_.spread_window);
+        auto c1 = rest.fetch_klines(instr1_.normalized(), config_.interval, config_.spread_window);
+        auto c2 = rest.fetch_klines(instr2_.normalized(), config_.interval, config_.spread_window);
         size_t n = std::min(c1.size(), c2.size());
         for (size_t i = 0; i < n; ++i) {
             estimator->update(std::log(c1[i]), std::log(c2[i]));

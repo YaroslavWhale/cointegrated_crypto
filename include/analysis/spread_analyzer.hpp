@@ -11,7 +11,6 @@ public:
     std::string add_spread(double spread);
 
     double z_score() const;
-
     double current_threshold() const;
 
     void reset();
@@ -20,7 +19,6 @@ public:
 private:
     double compute_z(double spread) const;
     double compute_threshold() const;
-
     std::string signal_from_z(double z, double threshold) const;
 
     size_t spread_window_;
@@ -33,7 +31,7 @@ private:
 
     int consecutive_exceed_ = 0;
     int prev_sign_ = 0;
-    int required_consecutive_ = 2;
+    int required_consecutive_ = 1;
 
     double last_z_ = 0.0;
 };

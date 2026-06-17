@@ -1,3 +1,4 @@
+//не используется в текущей стратегии
 #pragma once
 #include "filters/i_state_estimator.hpp"
 

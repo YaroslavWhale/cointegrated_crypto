@@ -9,13 +9,13 @@ struct AppConfig {
     std::string symbol1 = "BTC";
     std::string symbol2 = "ETH";
     std::string quote = "USDT";
-    int spread_window = 50;
+    std::string interval = "1m";
+    int spread_window = 150;
     int warmup_bars = 300;
     double initial_balance = 10000.0;
     double commission = 0.001;
     double threshold_mult = 2.0;
     double min_threshold = 0.5;
-    // pseudo_beta_R удалён
 };
 
 class StrategyApplication {
@@ -24,9 +24,9 @@ public:
     int run();
 
 private:
-    AppConfig config_;
-    Instrument instr1_, instr2_;
-
     std::unique_ptr<IStateEstimator> create_kalman();
     std::unique_ptr<ILiveDataFeed> create_feed();
+
+    AppConfig config_;
+    Instrument instr1_, instr2_;
 };

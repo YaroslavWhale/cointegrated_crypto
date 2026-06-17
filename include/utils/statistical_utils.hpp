@@ -21,7 +21,6 @@ struct KalmanParams3D {
 
 OLSResult compute_ols(const std::vector<double>& x, const std::vector<double>& y);
 
-//для совместимости
 KalmanParams optimize_kalman_2d(const std::vector<double>& log_p1,
                                 const std::vector<double>& log_p2,
                                 double init_alpha, double init_beta);

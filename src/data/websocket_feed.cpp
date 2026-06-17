@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <cctype>
 
-BinanceWebSocketFeed::BinanceWebSocketFeed() {
+BinanceWebSocketFeed::BinanceWebSocketFeed(const std::string& interval)
+    : interval_(interval) {
     ws_client_.init_asio();
     ws_client_.clear_access_channels(websocketpp::log::alevel::all);
     ws_client_.clear_error_channels(websocketpp::log::elevel::all);
@@ -58,8 +59,8 @@ void BinanceWebSocketFeed::set_callback(PairPriceCallback cb) { callback_ = cb; 
 void BinanceWebSocketFeed::subscribe(const std::string& sym1, const std::string& sym2) {
     sym1_orig_ = sym1;
     sym2_orig_ = sym2;
-    std::string s1 = sym1 + "@kline_1m";
-    std::string s2 = sym2 + "@kline_1m";
+    std::string s1 = sym1 + "@kline_" + interval_;
+    std::string s2 = sym2 + "@kline_" + interval_;
     std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
     subscribed_streams_ = {s1, s2};

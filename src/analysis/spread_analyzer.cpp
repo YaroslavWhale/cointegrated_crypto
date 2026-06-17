@@ -34,7 +34,7 @@ std::string SpreadAnalyzer::add_spread(double spread) {
 
     double z = 0.0;
     if (spread_buffer_.size() >= 2) {
-        z = compute_z(spread_buffer_.back());
+        z = compute_z(spread);
     }
     last_z_ = z;
 
