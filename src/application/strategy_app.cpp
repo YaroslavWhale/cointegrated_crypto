@@ -1,14 +1,17 @@
 #include "application/strategy_app.hpp"
 #include "data/rest_client.hpp"
 #include "data/websocket_feed.hpp"
-#include "filters/kalman_filter_3d.hpp"
+#include "filters/kalman_filter_2d.hpp"
 #include "portfolio/simple_portfolio.hpp"
+#include "analysis/spread_analyzer.hpp"
+#include "strategy/pair_trading_strategy.hpp"
 #include "utils/statistical_utils.hpp"
 #include <iostream>
 #include <csignal>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cmath>
 
 static std::atomic<bool> running{true};
 void signal_handler(int) { running = false; }
@@ -21,7 +24,6 @@ StrategyApplication::StrategyApplication(const AppConfig& cfg) : config_(cfg) {
 
 std::unique_ptr<IStateEstimator> StrategyApplication::create_kalman() {
     BinanceRestClient rest;
-
     std::cout << "[1/3] Fetching historical data (" << config_.warmup_bars << " candles, "
               << config_.interval << ")...\n";
     auto closes1 = rest.fetch_klines(instr1_.normalized(), config_.interval, config_.warmup_bars);
@@ -37,23 +39,17 @@ std::unique_ptr<IStateEstimator> StrategyApplication::create_kalman() {
         log2[i] = std::log(closes2[i]);
     }
 
-    std::cout << "[2/3] Optimizing 3D Kalman parameters (with quadratic term)...\n";
+    std::cout << "[2/3] Optimizing 2D Kalman parameters...\n";
     OLSResult ols = compute_ols(log2, log1);
-    std::cout << "Initial OLS: alpha=" << ols.alpha << ", beta=" << ols.beta << "\n";
+    KalmanParams params = optimize_kalman_2d(log1, log2, ols.alpha, ols.beta);
 
-    double init_gamma = 0.0;
-    KalmanParams3D params = optimize_kalman_3d(log1, log2, ols.alpha, ols.beta, init_gamma);
-
-    std::cout << "[3/3] Creating 3D Kalman filter and warming up...\n";
-    auto est = std::make_unique<KalmanFilter3D>(params.R,
-                                                params.Q_alpha, params.Q_beta, params.Q_gamma,
-                                                ols.alpha, ols.beta, init_gamma,
-                                                1e-4, 1e-6, 1e-8);
-
+    std::cout << "[3/3] Creating 2D Kalman filter and warming up...\n";
+    auto est = std::make_unique<KalmanFilter2D>(params.R, params.Q_alpha, params.Q_beta,
+                                                ols.alpha, ols.beta, 1e-4, 1e-6);
     for (size_t i = 0; i < n; ++i)
         est->update(log1[i], log2[i]);
 
-    std::cout << "3D Filter warmed up on " << n << " data points.\n";
+    std::cout << "2D Filter warmed up on " << n << " data points.\n";
     return est;
 }
 
@@ -70,11 +66,22 @@ int StrategyApplication::run() {
 
     auto estimator = create_kalman();
 
-    std::cout << "Warming up spread analyzer with filter history...\n";
-    auto analyzer = std::make_unique<SpreadAnalyzer>(config_.spread_window,
-                                                     config_.spread_window,
-                                                     config_.threshold_mult,
-                                                     config_.min_threshold);
+    double entry_multiplier = 2.0;
+    double exit_multiplier  = 0.75;
+    size_t vol_window       = 50;
+    double vol_scale_factor = 0.5;
+
+    auto analyzer = std::make_unique<SpreadAnalyzer>(
+        config_.spread_window,
+        config_.spread_window,
+        entry_multiplier,
+        exit_multiplier,
+        config_.min_threshold,
+        vol_window,
+        vol_scale_factor
+        );
+
+    std::cout << "Warming up spread analyzer...\n";
     {
         BinanceRestClient rest;
         auto c1 = rest.fetch_klines(instr1_.normalized(), config_.interval, config_.spread_window);
@@ -94,7 +101,8 @@ int StrategyApplication::run() {
 
     PairTradingStrategy strategy(std::move(estimator),
                                  std::move(analyzer),
-                                 std::move(portfolio));
+                                 std::move(portfolio),
+                                 instr1_, instr2_);
 
     auto feed = create_feed();
     feed->set_callback([&](double p1, double p2, uint64_t ts) {
@@ -105,7 +113,6 @@ int StrategyApplication::run() {
     feed->start();
 
     std::cout << "\n=== STRATEGY IS LIVE ===\nPress Ctrl+C to stop\n\n";
-
     while (running) std::this_thread::sleep_for(std::chrono::milliseconds(200));
     feed->stop();
     std::cout << "Strategy stopped.\n";
