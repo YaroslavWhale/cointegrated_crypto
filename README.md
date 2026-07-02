@@ -84,7 +84,7 @@ cpr из AUR: yay -S cpr или собрать из исходников
 ## Сборка и запуск
 
 ```bash
-git clone https://github.com/ahsoka25/cointegrated_crypto.git
+git clone https://github.com/YaroslavWhale/cointegrated_crypto.git
 cd cointegrated_crypto
 mkdir build && cd build
 cmake ..
